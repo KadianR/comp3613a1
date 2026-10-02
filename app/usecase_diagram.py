@@ -128,6 +128,7 @@ def to_plantuml(spec: DiagramSpec) -> str:
 
     lines = [
         "@startuml",
+        "left to right direction",
         "!pragma layout smetana",
         "skinparam shadowing false",
         "skinparam actorBorderColor #1B365D",
@@ -163,15 +164,22 @@ def to_plantuml(spec: DiagramSpec) -> str:
     lines.append("")
 
     actor_side = {actor.name: actor.side for actor in spec.actors}
+    left_actor_cases: set[str] = set()
+    right_use_cases: list[str] = []
     for case in spec.use_cases:
         uc_alias = aliases[f"uc:{case.name}"]
+        linked_sides = {actor_side[actor] for actor in case.actors if actor in actor_side}
+        if linked_sides == {"left"}:
+            left_actor_cases.add(case.name)
+        elif linked_sides == {"right"}:
+            right_use_cases.append(uc_alias)
         for actor_name in case.actors:
             actor_key = f"actor:{actor_name}"
             if actor_key not in aliases:
                 continue
             actor_alias = aliases[actor_key]
             if actor_side.get(actor_name) == "right":
-                lines.append(f"{uc_alias} <-- {actor_alias}")
+                lines.append(f"{actor_alias} -up-> {uc_alias}")
             else:
                 lines.append(f"{actor_alias} --> {uc_alias}")
         for included in case.includes:
@@ -182,6 +190,55 @@ def to_plantuml(spec: DiagramSpec) -> str:
             other = aliases.get(f"uc:{base}")
             if other:
                 lines.append(f"{uc_alias} ..> {other} : <<extend>>")
+                lines.append(f"{uc_alias} -[hidden]right-> {other}")
+
+    for case in spec.use_cases:
+        if case.name not in left_actor_cases:
+            continue
+        case_alias = aliases[f"uc:{case.name}"]
+        for actor in spec.actors:
+            if actor.side == "left" and actor.name in case.actors:
+                actor_alias = aliases[f"actor:{actor.name}"]
+                lines.append(f"{actor_alias} -[hidden]right-> {case_alias}")
+
+    for case in spec.use_cases:
+        linked_sides = {actor_side[actor] for actor in case.actors if actor in actor_side}
+        if linked_sides != {"left", "right"}:
+            continue
+        case_alias = aliases[f"uc:{case.name}"]
+        for actor in spec.actors:
+            actor_alias = aliases[f"actor:{actor.name}"]
+            if actor.side == "left" and actor.name in case.actors:
+                lines.append(f"{actor_alias} -[hidden]right-> {case_alias}")
+            elif actor.side == "right" and actor.name in case.actors:
+                lines.append(f"{case_alias} -[hidden]right-> {actor_alias}")
+
+    extension_bases = {
+        base for case in spec.use_cases for base in case.extends
+    }
+    left_flow_cases = left_actor_cases & extension_bases
+    while True:
+        extensions = {
+            case.name
+            for case in spec.use_cases
+            if any(base in left_flow_cases for base in case.extends)
+        }
+        new_extensions = extensions - left_flow_cases
+        if not new_extensions:
+            break
+        left_flow_cases.update(new_extensions)
+
+    extended_cases = {
+        base
+        for case in spec.use_cases
+        if case.name in left_flow_cases
+        for base in case.extends
+    }
+    for leaf in left_flow_cases - extended_cases:
+        left_alias = aliases.get(f"uc:{leaf}")
+        if left_alias:
+            for right_case in right_use_cases:
+                lines.append(f"{left_alias} -[hidden]right-> {right_case}")
 
     lines.append("")
     lines.append("@enduml")

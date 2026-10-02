@@ -1,0 +1,47 @@
+@startuml
+left to right direction
+!pragma layout smetana
+skinparam shadowing false
+skinparam actorBorderColor #1B365D
+skinparam actorFontColor #1E232D
+skinparam usecaseBackgroundColor #FFFFFF
+skinparam usecaseBorderColor #1B365D
+skinparam usecaseFontColor #1E232D
+skinparam rectangleBorderColor #1B365D
+skinparam rectangleBackgroundColor #F8FAFC
+skinparam arrowColor #1B365D
+
+actor "Student" as Student
+
+rectangle "Student Accommodation" {
+  usecase "Review Booking Requests" as Review_Booking_Requests
+  usecase "Approve or Decline Booking Request" as Approve_or_Decline_Booking_Request
+  usecase "Search Accommodation" as Search_Accommodation
+  usecase "View Booking Status" as View_Booking_Status
+  usecase "Sign In" as Sign_In
+  usecase "Request Accommodation" as Request_Accommodation
+  usecase "View Listing Details" as View_Listing_Details
+  usecase "Review a Completed Stay" as Review_a_Completed_Stay
+}
+
+actor "Landlord" as Landlord
+
+Landlord -up-> Review_Booking_Requests
+Approve_or_Decline_Booking_Request ..> Review_Booking_Requests : <<extend>>
+Approve_or_Decline_Booking_Request -[hidden]right-> Review_Booking_Requests
+Student --> Search_Accommodation
+Student --> View_Booking_Status
+Student --> Sign_In
+Landlord -up-> Sign_In
+Student --> Request_Accommodation
+Student --> View_Listing_Details
+Student --> Review_a_Completed_Stay
+Student -[hidden]right-> Search_Accommodation
+Student -[hidden]right-> View_Booking_Status
+Student -[hidden]right-> Request_Accommodation
+Student -[hidden]right-> View_Listing_Details
+Student -[hidden]right-> Review_a_Completed_Stay
+Student -[hidden]right-> Sign_In
+Sign_In -[hidden]right-> Landlord
+
+@enduml

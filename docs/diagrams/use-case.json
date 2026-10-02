@@ -1,0 +1,35 @@
+{
+  "system": "Student Accommodation",
+  "actors": [
+    {"name": "Student", "side": "left"},
+    {"name": "Landlord", "side": "right"}
+  ],
+  "use_cases": [
+    {
+      "name": "Review Booking Requests",
+      "actors": ["Landlord"]
+    },
+    {
+      "name": "Approve or Decline Booking Request",
+      "extends": ["Review Booking Requests"]
+    },
+    {
+      "name": "Search Accommodation",
+      "actors": ["Student"]
+    },
+    {
+      "name": "View Booking Status",
+      "actors": ["Student"]
+    },
+    {"name": "Sign In", "actors": ["Student", "Landlord"]},
+    {
+      "name": "Request Accommodation",
+      "actors": ["Student"]
+    },
+    {
+      "name": "View Listing Details",
+      "actors": ["Student"]
+    },
+    {"name": "Review a Completed Stay", "actors": ["Student"]}
+  ]
+}

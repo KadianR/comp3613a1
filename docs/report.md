@@ -6,17 +6,21 @@ Do not put your student ID in this file if you will commit it. The PDF cover add
 
 ## Assigned project
 
+Student Accommodation
+
 ## Three workflows
 
-### 1.
+### 1. Search and request accommodation (Student)
 
-### 2.
+### 2. Review and manage booking requests (Landlord)
 
-### 3.
+### 3. Review a completed stay (Student)
 
 ## Use case diagram
 
 ![Use case diagram](diagrams/use-case.png)
+
+Student is directly associated with Search Accommodation, View Booking Status, Request Accommodation, and View Listing Details. View Listing Details is a standalone use case, not an extension. Student and Landlord share Sign In. Approve or Decline Booking Request optionally extends Review Booking Requests, so a landlord may leave a request pending. Reviewing a completed stay remains a Student use case.
 
 ## Model diagram
 
