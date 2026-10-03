@@ -92,15 +92,11 @@ A student can make many booking requests, each tied to one accommodation and one
 
 ## Wireframes
 
-Embed each student-crafted wireframe here (Phase 4). Paths are relative to this file:
+### Student Accommodation wireframe set
 
-```markdown
-### Explore / Search Publications
+![Student Accommodation wireframe](wireframes/COMP3613%20A1%20Wireframe.png)
 
-![Explore / Search Publications](wireframes/explore.png)
-```
-
-`python manage.py report` also embeds any PNG/JPG still missing from `docs/wireframes/`.
+This wireframe covers the core student and landlord flows: search/listing, request and booking state, landlord approval, review and completed stay feedback. It matches the project model and use-case draft closely, though the request lifecycle could be clearer at the handoff between the student’s “My Bookings” screen and the landlord “Request Details” action.
 
 ## Theming
 
