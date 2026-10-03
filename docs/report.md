@@ -28,8 +28,67 @@ First draft. Update this section in Phase 5 when polish revises the model, and n
 
 ```mermaid
 erDiagram
-  ENTITY ||--o{ OTHER : relates
+  Student {
+    UUID id PK
+    string first_name
+    string last_name
+    string email
+    string password_hash
+    string university
+    datetime created_at
+  }
+
+  Landlord {
+    UUID id PK
+    string first_name
+    string last_name
+    string email
+    string password_hash
+    string company_name
+    datetime created_at
+  }
+
+  Accommodation {
+    UUID id PK
+    string title
+    string address
+    string description
+    decimal price_per_week
+    string status
+    UUID landlord_id FK
+    datetime created_at
+  }
+
+  BookingRequest {
+    UUID id PK
+    UUID student_id FK
+    UUID accommodation_id FK
+    date start_date
+    date end_date
+    string status
+    text message
+    datetime created_at
+  }
+
+  StayReview {
+    UUID id PK
+    UUID student_id FK
+    UUID accommodation_id FK
+    UUID booking_request_id FK
+    int rating
+    text review_text
+    datetime created_at
+  }
+
+  Student ||--o{ BookingRequest : makes
+  Student ||--o{ StayReview : writes
+  Landlord ||--o{ Accommodation : owns
+  Accommodation ||--o{ BookingRequest : receives
+  Accommodation ||--o{ StayReview : has
+  BookingRequest ||--o| StayReview : verifies
 ```
+
+A student can make many booking requests, each tied to one accommodation and one request window defined by start_date and end_date so overlapping bookings can be checked. Each booking request can optionally be tied to a stay review after the stay is complete, allowing the review to verify which request it belongs to. Each accommodation belongs to one landlord but may receive many requests over time.
 
 ## Wireframes
 
