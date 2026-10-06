@@ -129,3 +129,22 @@ async def update_property(
         url=request.url_for("landlord_properties_view"),
         status_code=status.HTTP_303_SEE_OTHER,
     )
+
+
+@router.post("/landlord/properties/{accommodation_id}/delete", name="delete_property")
+async def delete_property(
+    request: Request,
+    user: LandlordDep,
+    db: SessionDep,
+    accommodation_id: int,
+):
+    service = AccommodationService(AccommodationRepository(db))
+    try:
+        service.delete_listing(accommodation_id, user.id)
+        flash(request, "Listing removed along with its booking requests.")
+    except ValueError as exc:
+        flash(request, str(exc), "danger")
+    return RedirectResponse(
+        url=request.url_for("landlord_properties_view"),
+        status_code=status.HTTP_303_SEE_OTHER,
+    )

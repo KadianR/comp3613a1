@@ -74,6 +74,19 @@ class AccommodationRepository:
         self.db.refresh(accommodation)
         return accommodation
 
+    def delete_owned(self, accommodation_id: int, landlord_id: int) -> bool:
+        accommodation = self.get_owned(accommodation_id, landlord_id)
+        if accommodation is None:
+            return False
+        related = list(self.db.exec(select(StayReview).where(StayReview.accommodation_id == accommodation_id)).all())
+        related += list(self.db.exec(select(BookingRequest).where(BookingRequest.accommodation_id == accommodation_id)).all())
+        for row in related:
+            self.db.delete(row)
+        self.db.flush()
+        self.db.delete(accommodation)
+        self.db.commit()
+        return True
+
     def create(self, accommodation: Accommodation) -> Accommodation:
         self.db.add(accommodation)
         self.db.commit()

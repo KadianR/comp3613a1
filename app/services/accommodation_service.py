@@ -69,6 +69,12 @@ class AccommodationService:
         self._write_listing_image(listing.id, image_data)
         return listing
 
+    def delete_listing(self, accommodation_id: int, landlord_id: int) -> None:
+        if not self.accommodation_repo.delete_owned(accommodation_id, landlord_id):
+            raise ValueError("Property not found")
+        for image_path in Path("app/static/uploads").glob(f"accommodation-{accommodation_id}-*"):
+            image_path.unlink(missing_ok=True)
+
     async def _read_listing_image(self, image: UploadFile | None) -> tuple[str, bytes] | None:
         if not image or not image.filename:
             return None
