@@ -26,7 +26,10 @@
         <p class="workflow-meta mb-2">{{ property.address }}</p>
         <p class="mb-3">{{ property.description }}</p>
         <p class="fw-semibold mb-0">TT${{ property.price_per_month }} / month</p>
-        <a class="btn btn-outline-secondary btn-sm mt-3" href="{{ url_for('edit_property_view', accommodation_id=property.id) }}">Edit details</a>
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('edit_property_view', accommodation_id=property.id) }}">Edit details</a>
+          <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('property_ratings_view', accommodation_id=property.id) }}">View ratings</a>
+        </div>
       </article>
     </div>
     {% endfor %}

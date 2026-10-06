@@ -131,6 +131,33 @@ async def update_property(
     )
 
 
+@router.get(
+    "/landlord/properties/{accommodation_id}/ratings",
+    response_class=HTMLResponse,
+    name="property_ratings_view",
+)
+async def property_ratings_view(
+    request: Request,
+    user: LandlordDep,
+    db: SessionDep,
+    accommodation_id: int,
+):
+    service = AccommodationService(AccommodationRepository(db))
+    try:
+        ratings = service.get_owned_ratings(accommodation_id, user.id)
+    except ValueError as exc:
+        flash(request, str(exc), "danger")
+        return RedirectResponse(
+            url=request.url_for("landlord_properties_view"),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
+    return templates.TemplateResponse(
+        request=request,
+        name="property-ratings.html",
+        context={"user": user, **ratings},
+    )
+
+
 @router.post("/landlord/properties/{accommodation_id}/delete", name="delete_property")
 async def delete_property(
     request: Request,

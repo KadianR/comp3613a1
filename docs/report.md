@@ -150,6 +150,7 @@ Every account a marker needs, including extra users you added. Starter accounts:
 - bob / bobpass — student
 - alice / alicepass — student
 - carmen / carmenpass — student
+- Additional demo students, all with password `studentpass`: anika.mohammed, jerome.baptiste, nadia.persad, marcus.joseph, priya.maharaj, devon.charles, shanice.williams, ravi.singh, tiana.thomas, kyle.alexander, sasha.ali, isaiah.phillip
 - admin / adminpass — landlord (admin role)
 
 ## YouTube URL

@@ -47,6 +47,211 @@ def cmd_init(args: argparse.Namespace) -> None:
         cmd_seed(args)
 
 
+_NEW_STUDENTS = [
+    "anika.mohammed", "jerome.baptiste", "nadia.persad", "marcus.joseph",
+    "priya.maharaj", "devon.charles", "shanice.williams", "ravi.singh",
+    "tiana.thomas", "kyle.alexander", "sasha.ali", "isaiah.phillip",
+]
+
+_BASE_TITLES = [
+    "Savannah Heights", "Maraval Garden Apartment", "Chaguanas Central Flat",
+    "San Fernando Hill View", "Scarborough Bay Apartment",
+]
+
+# Remote seed photos are reused because only these URLs have been confirmed to load.
+_IMAGE_URLS = [
+    "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=85",
+    "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85",
+]
+
+_EXTRA_LISTINGS = [
+    ("St. Augustine Student Studio", "14 Gordon Street, St. Augustine, Trinidad",
+     "A compact furnished studio a short walk from the UWI St. Augustine campus.", 3200),
+    ("Curepe Junction Flat", "3 Churchill Roosevelt Highway, Curepe, Trinidad",
+     "A bright two-bedroom flat near the Curepe junction with easy maxi taxi access.", 3800),
+    ("Arima Heights Apartment", "22 Cleaver Road, Arima, Trinidad",
+     "A quiet, secure apartment in the Arima hills with parking and a shared yard.", 3000),
+    ("Couva Gardens Townhouse", "41 Southern Main Road, Couva, Trinidad",
+     "A spacious townhouse with a study nook, close to shopping and the highway.", 4200),
+    ("Diego Martin Hillside Suite", "8 Ibis Avenue, Diego Martin, Trinidad",
+     "A modern suite with a balcony and a cool breeze, minutes from Westmoorings.", 5200),
+    ("Mount Hope Residence", "17 Mount Hope Road, Mount Hope, Trinidad",
+     "A furnished room-and-kitchen unit near the medical sciences complex.", 3600),
+]
+
+# One list of ratings per listing, in _BASE_TITLES + _EXTRA_LISTINGS order.
+_RATING_PATTERNS = [
+    [5, 4, 5, 4], [4, 4, 3, 5], [5, 5, 4], [3, 4, 4, 3], [4, 5, 5, 4], [3, 3, 4],
+    [5, 4, 4, 5], [4, 3, 5], [2, 4, 3, 4], [5, 5, 5], [4, 4, 3, 4],
+]
+
+_REVIEW_TEXT = {
+    5: [
+        "Spotless and quiet, with a quick commute to campus. The landlord answered every message the same day.",
+        "Exactly as pictured. Great water pressure, reliable internet and a very safe neighbourhood.",
+        "The best place I have stayed as a student. Bright rooms, friendly neighbours and fair rent.",
+    ],
+    4: [
+        "Comfortable and well located. A couple of small repairs took a few days but were handled politely.",
+        "Good value for the area. Quiet at night and close to maxi taxi routes.",
+        "Clean, furnished and easy to settle into. Parking was a little tight.",
+    ],
+    3: [
+        "Decent for the price, but the water supply was patchy some mornings.",
+        "Convenient location, though the furniture was dated and the street can get noisy.",
+        "Fine for a semester. Communication could have been quicker.",
+    ],
+    2: ["Rent was fair but maintenance was slow and the kitchen needed attention."],
+}
+
+# (username, listing, kind, start offset in days, length in days, message)
+_EXTRA_BOOKINGS = [
+    ("bob", "Scarborough Bay Apartment", "past", -100, 60, "I spent the semester here and would like to leave a review."),
+    ("alice", "Savannah Heights", "past", -90, 60, "Stayed for two months while on placement."),
+    ("carmen", "San Fernando Hill View", "past", -75, 45, "Short stay during exam season."),
+    ("anika.mohammed", "St. Augustine Student Studio", "current", -20, 90, "Moving in for the full semester."),
+    ("jerome.baptiste", "Curepe Junction Flat", "current", -10, 60, "Sharing with a classmate this term."),
+    ("kyle.alexander", "Couva Gardens Townhouse", "current", 30, 90, "Booking ahead for next semester."),
+    ("nadia.persad", "Savannah Heights", "pending", 14, 60, "Is the apartment available from the start of next month?"),
+    ("marcus.joseph", "Maraval Garden Apartment", "pending", 21, 90, "I am a postgraduate student and need a quiet space."),
+    ("priya.maharaj", "Scarborough Bay Apartment", "pending", 30, 60, "Doing a placement in Tobago for two months."),
+    ("devon.charles", "Diego Martin Hillside Suite", "pending", 18, 120, "Looking for a longer stay close to the city."),
+    ("shanice.williams", "Mount Hope Residence", "pending", 25, 90, "Close to my clinical rotations, which is ideal."),
+    ("sasha.ali", "Arima Heights Apartment", "pending", 12, 60, "Can I arrange a viewing this weekend?"),
+    ("ravi.singh", "Savannah Heights", "declined", 10, 30, "Hoping for a short-term booking."),
+    ("tiana.thomas", "Arima Heights Apartment", "declined", 20, 30, "Needed somewhere for a month."),
+]
+
+
+def _find_booking(session, student_id: int, listing_id: int, kind: str):
+    from sqlmodel import select
+
+    from app.models.accommodation import BookingRequest
+
+    statement = select(BookingRequest).where(
+        BookingRequest.student_id == student_id,
+        BookingRequest.accommodation_id == listing_id,
+    )
+    if kind == "past":
+        statement = statement.where(
+            BookingRequest.status.in_(["approved", "completed"]),
+            BookingRequest.end_date < date.today(),
+        )
+    elif kind == "current":
+        statement = statement.where(
+            BookingRequest.status == "approved",
+            BookingRequest.end_date >= date.today(),
+        )
+    else:
+        statement = statement.where(BookingRequest.status == kind)
+    return session.exec(statement).first()
+
+
+def _seed_extra_demo(session, user_repo, accommodation_repo, landlord) -> None:
+    """Add listings, completed stays with reviews, and varied requests; safe to rerun."""
+    from datetime import datetime, time
+
+    from sqlmodel import select
+
+    from app.models.accommodation import Accommodation, BookingRequest, StayReview
+
+    titles = list(_BASE_TITLES)
+    for index, (title, address, description, price) in enumerate(_EXTRA_LISTINGS):
+        titles.append(title)
+        if session.exec(select(Accommodation).where(Accommodation.title == title)).first():
+            continue
+        accommodation_repo.create(
+            Accommodation(
+                title=title,
+                address=address,
+                description=description,
+                price_per_month=price,
+                image_url=_IMAGE_URLS[index % len(_IMAGE_URLS)],
+                status="available",
+                landlord_id=landlord.id,
+            )
+        )
+        print(f"  create {title} (accommodation)")
+
+    listings = {
+        listing.title: listing
+        for listing in session.exec(select(Accommodation).where(Accommodation.title.in_(titles))).all()
+    }
+    reviewers = [user_repo.get_by_username(name) for name in _NEW_STUDENTS]
+    today = date.today()
+    reviews_added = 0
+
+    review_plan = [(listings.get(title), ratings) for title, ratings in zip(titles, _RATING_PATTERNS)]
+    known = set(titles)
+    # Listings created through the UI also get ratings so every place can be demoed.
+    review_plan += [
+        (listing, [4, 5, 4])
+        for listing in session.exec(select(Accommodation)).all()
+        if listing.title not in known
+        and not session.exec(select(StayReview).where(StayReview.accommodation_id == listing.id)).first()
+    ]
+
+    for i, (listing, ratings) in enumerate(review_plan):
+        if listing is None:
+            continue
+        for k, rating in enumerate(ratings):
+            student = reviewers[(i + 3 * k) % len(reviewers)]
+            if student is None:
+                continue
+            booking = _find_booking(session, student.id, listing.id, "past")
+            if booking is None:
+                end = today - timedelta(days=15 + 25 * k + 4 * i)
+                booking = accommodation_repo.create_booking_request(
+                    BookingRequest(
+                        student_id=student.id,
+                        accommodation_id=listing.id,
+                        start_date=end - timedelta(days=30 * (1 + (i + k) % 3)),
+                        end_date=end,
+                        status="completed" if k % 2 == 0 else "approved",
+                        message="Looking for a place close to campus for the semester.",
+                    )
+                )
+            if session.exec(select(StayReview).where(StayReview.booking_request_id == booking.id)).first():
+                continue
+            texts = _REVIEW_TEXT[rating]
+            session.add(
+                StayReview(
+                    student_name=student.username,
+                    student_id=student.id,
+                    accommodation_id=listing.id,
+                    booking_request_id=booking.id,
+                    rating=rating,
+                    review_text=texts[(i + k) % len(texts)],
+                    created_at=datetime.combine(booking.end_date + timedelta(days=1), time(10, 0)),
+                )
+            )
+            session.commit()
+            reviews_added += 1
+
+    bookings_added = 0
+    for username, title, kind, offset, length, message in _EXTRA_BOOKINGS:
+        student = user_repo.get_by_username(username)
+        listing = listings.get(title)
+        if student is None or listing is None or _find_booking(session, student.id, listing.id, kind):
+            continue
+        start = today + timedelta(days=offset)
+        accommodation_repo.create_booking_request(
+            BookingRequest(
+                student_id=student.id,
+                accommodation_id=listing.id,
+                start_date=start,
+                end_date=start + timedelta(days=length),
+                status="declined" if kind == "declined" else "pending" if kind == "pending" else "approved",
+                message=message,
+            )
+        )
+        bookings_added += 1
+    print(f"  added {reviews_added} review(s) and {bookings_added} booking(s)")
+
+
 def cmd_seed(args: argparse.Namespace) -> None:
     """Insert demo users.
 
@@ -70,7 +275,7 @@ def cmd_seed(args: argparse.Namespace) -> None:
         ("admin", "admin@example.com", "adminpass", "admin"),
         ("alice", "alice@example.com", "alicepass", "regular_user"),
         ("carmen", "carmen@example.com", "carmenpass", "regular_user"),
-    ]
+    ] + [(name, f"{name}@example.com", "studentpass", "regular_user") for name in _NEW_STUDENTS]
 
     created = 0
     skipped = 0
@@ -230,8 +435,10 @@ def cmd_seed(args: argparse.Namespace) -> None:
                     )
                     print(f"  create {username} request for {title}")
 
+            _seed_extra_demo(session, repo, accommodation_repo, landlord)
+
     print(f"Seed done — created {created}, skipped {skipped}.")
-    print("Login with bob/bobpass or admin/adminpass")
+    print("Login with bob/bobpass, admin/adminpass, or any extra student with password studentpass")
 
 
 def cmd_run(args: argparse.Namespace) -> None:

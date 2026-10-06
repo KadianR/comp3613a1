@@ -807,6 +807,28 @@ body {
   }
 }
 
+.rating-stars {
+  display: flex;
+  align-items: center;
+  gap: 0.1rem;
+  margin-bottom: 0.6rem;
+}
+
+.rating-stars .rating-star {
+  font-size: 1.15rem;
+  color: var(--brand-border);
+}
+
+.rating-stars .rating-star.is-on {
+  color: #d4a72c;
+}
+
+.rating-stars .rating-label {
+  margin-left: 0.4rem;
+  color: var(--brand-muted);
+  font-size: 0.9rem;
+}
+
 .review-stars {
   display: flex;
   gap: 0.2rem;

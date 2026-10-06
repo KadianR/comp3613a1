@@ -46,6 +46,27 @@ class AccommodationRepository:
         )
         return list(self.db.exec(statement).all())
 
+    def rating_summaries(self, accommodation_ids: list[int]) -> dict[int, tuple[float, int]]:
+        if not accommodation_ids:
+            return {}
+        statement = (
+            select(StayReview.accommodation_id, func.avg(StayReview.rating), func.count(StayReview.id))
+            .where(StayReview.accommodation_id.in_(accommodation_ids))
+            .group_by(StayReview.accommodation_id)
+        )
+        return {
+            accommodation_id: (float(average), count)
+            for accommodation_id, average, count in self.db.exec(statement).all()
+        }
+
+    def list_reviews(self, accommodation_id: int) -> list[StayReview]:
+        statement = (
+            select(StayReview)
+            .where(StayReview.accommodation_id == accommodation_id)
+            .order_by(StayReview.created_at.desc())
+        )
+        return list(self.db.exec(statement).all())
+
     def get_owned(self, accommodation_id: int, landlord_id: int) -> Accommodation | None:
         statement = select(Accommodation).where(
             Accommodation.id == accommodation_id,

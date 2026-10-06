@@ -22,6 +22,7 @@ async def accommodation_search_view(
     sort: str = Query(default="newest"),
 ):
     service = AccommodationService(AccommodationRepository(db))
+    accommodations = service.search_available(query, sort)
 
     return templates.TemplateResponse(
         request=request,
@@ -30,7 +31,8 @@ async def accommodation_search_view(
             "user": user,
             "query": query,
             "sort": sort,
-            "accommodations": service.search_available(query, sort),
+            "accommodations": accommodations,
+            "ratings": service.rating_summaries(accommodations),
         },
     )
 

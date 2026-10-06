@@ -1,0 +1,38 @@
+{% extends "authenticated-base.html" %}
+{% from "_rating.html" import rating_stars %}
+{% block title %}Ratings for {{ listing.title }}{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('landlord_properties_view') }}">← Back to My Property</a>
+  <div class="workflow-header mt-3">
+    <p class="workflow-eyebrow">Landlord dashboard</p>
+    <h1 class="h3 mb-1">Ratings for {{ listing.title }}</h1>
+    <p class="text-muted mb-2">{{ listing.address }}</p>
+    {{ rating_stars(average, reviews|length) }}
+  </div>
+
+  {% if reviews %}
+  <div class="row g-3">
+    {% for review in reviews %}
+    <div class="col-lg-6">
+      <article class="surface-card p-4 h-100">
+        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+          <strong>{{ review.student_name }}</strong>
+          <span class="workflow-meta">{{ review.created_at.strftime('%d %b %Y') }}</span>
+        </div>
+        {{ rating_stars(review.rating, 1) }}
+        <p class="mb-0">{{ review.review_text or "No written comment." }}</p>
+      </article>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="surface-card empty-state">
+    <span class="material-symbols-outlined">star</span>
+    <h2 class="h5">No ratings yet</h2>
+    <p class="text-muted mb-0">Ratings appear here after students review a completed stay.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

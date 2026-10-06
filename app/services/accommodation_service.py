@@ -75,6 +75,17 @@ class AccommodationService:
         for image_path in Path("app/static/uploads").glob(f"accommodation-{accommodation_id}-*"):
             image_path.unlink(missing_ok=True)
 
+    def rating_summaries(self, listings) -> dict[int, tuple[float, int]]:
+        return self.accommodation_repo.rating_summaries([listing.id for listing in listings])
+
+    def get_owned_ratings(self, accommodation_id: int, landlord_id: int) -> dict:
+        listing = self.accommodation_repo.get_owned(accommodation_id, landlord_id)
+        if listing is None:
+            raise ValueError("Property not found")
+        reviews = self.accommodation_repo.list_reviews(accommodation_id)
+        average = sum(review.rating for review in reviews) / len(reviews) if reviews else None
+        return {"listing": listing, "reviews": reviews, "average": average}
+
     async def _read_listing_image(self, image: UploadFile | None) -> tuple[str, bytes] | None:
         if not image or not image.filename:
             return None

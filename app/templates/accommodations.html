@@ -1,4 +1,5 @@
 {% extends "authenticated-base.html" %}
+{% from "_rating.html" import rating_stars %}
 {% block title %}Search accommodation{% endblock %}
 
 {% block subpage_content %}
@@ -48,6 +49,8 @@
             <p class="small text-uppercase fw-semibold text-danger mb-2">Available</p>
             <h2 class="h5">{{ accommodation.title }}</h2>
             <p class="workflow-meta mb-2">{{ accommodation.address }}</p>
+            {% set summary = ratings.get(accommodation.id) %}
+            {{ rating_stars(summary[0] if summary else None, summary[1] if summary else 0) }}
             <p class="mb-3">{{ accommodation.description }}</p>
             <div class="d-flex align-items-center justify-content-between gap-3">
               <p class="fw-semibold mb-0">TT${{ accommodation.price_per_month }} / month</p>
