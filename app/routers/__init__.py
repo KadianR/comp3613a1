@@ -12,14 +12,18 @@ template_env.globals['get_flashed_messages'] = get_flashed_messages
 
 
 def accommodation_image(accommodation) -> str:
-	if getattr(accommodation, "image_url", None):
-		return accommodation.image_url
-	accommodation_id = accommodation.id
-	upload_dir = Path("app/static/uploads")
-	uploaded_images = sorted(upload_dir.glob(f"accommodation-{accommodation_id}-*"))
-	if uploaded_images:
-		return f"/static/uploads/{uploaded_images[0].name}"
-	return "/static/img/accommodation-placeholder.svg"
+    accommodation_id = accommodation.id
+    upload_dir = Path("app/static/uploads")
+    uploaded_images = sorted(
+        upload_dir.glob(f"accommodation-{accommodation_id}-*"),
+        key=lambda image_path: image_path.stat().st_mtime,
+        reverse=True,
+    )
+    if uploaded_images:
+        return f"/static/uploads/{uploaded_images[0].name}"
+    if getattr(accommodation, "image_url", None):
+        return accommodation.image_url
+    return "/static/img/accommodation-placeholder.svg"
 
 
 template_env.globals['accommodation_image'] = accommodation_image

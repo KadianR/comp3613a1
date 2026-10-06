@@ -67,6 +67,7 @@ body {
 }
 
 .landing-nav,
+.landing-stage,
 .landing-hero,
 .landing-foot {
   position: relative;
@@ -96,8 +97,76 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(2rem, 8vh, 5rem) clamp(1.25rem, 4vw, 3rem) 3rem;
+  padding: clamp(2rem, 8vh, 5rem) 0 3rem;
+  width: min(56%, 48rem);
   max-width: 48rem;
+  z-index: 2;
+}
+
+.landing-stage {
+  position: relative;
+  min-height: 0;
+  padding: 0 clamp(1.25rem, 4vw, 3rem);
+}
+
+.landing-stage .landing-hero {
+  position: relative;
+  transform: translateY(5rem);
+}
+
+.landing-carousel {
+  display: block;
+  position: absolute;
+  z-index: 0;
+  top: 50%;
+  right: clamp(1.5rem, 4vw, 3.5rem);
+  width: min(40vw, 35rem);
+  height: min(68vh, 31rem);
+  border-radius: 48% 48% 2rem 48%;
+  opacity: 0.96;
+  box-shadow: 0 28px 80px rgba(20, 5, 10, 0.24);
+  transform: translateY(-50%) rotate(2deg);
+  overflow: hidden;
+  animation: house-arrive 0.8s 0.12s ease-out both;
+}
+
+.landing-carousel .carousel-inner,
+.landing-carousel .carousel-item,
+.landing-carousel .carousel-item img {
+  width: 100%;
+  height: 100%;
+}
+
+.landing-carousel .carousel-item img {
+  object-fit: cover;
+  object-position: center;
+}
+
+.landing-carousel .carousel-indicators {
+  z-index: 3;
+  margin-bottom: 0.9rem;
+}
+
+.landing-carousel .carousel-indicators [data-bs-target] {
+  width: 1.5rem;
+  height: 0.25rem;
+  border: 0;
+  border-radius: 1rem;
+}
+
+.landing-photo-caption {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 3rem 1.5rem 2rem;
+  background: linear-gradient(transparent, rgba(30, 10, 15, 0.78));
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+@keyframes house-arrive {
+  from { opacity: 0; transform: translate(18px, -48%) rotate(5deg); }
+  to { opacity: 0.96; transform: translateY(-50%) rotate(2deg); }
 }
 
 .landing-kicker {
@@ -174,8 +243,33 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .landing-carousel {
+    animation: none;
+  }
+
+  .landing-carousel .carousel-item {
+    transition: none;
+  }
+
   .btn-landing:hover {
     transform: none;
+  }
+}
+
+@media (max-width: 800px) {
+  .landing-stage .landing-hero {
+    width: 100%;
+    max-width: 42rem;
+    padding-right: 0;
+    transform: none;
+  }
+
+  .landing-carousel {
+    right: -7rem;
+    width: 22rem;
+    height: 17rem;
+    opacity: 0.2;
+    box-shadow: none;
   }
 }
 
@@ -475,39 +569,58 @@ body {
 .booking-list-row {
   display: grid;
   grid-template-columns: minmax(13rem, 1.5fr) minmax(9rem, 1fr) minmax(9rem, 1fr) minmax(8rem, auto);
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
-  padding: 1rem 1.25rem;
+  padding: 1.5rem 1.75rem;
 }
 
 .booking-list-header {
   background: var(--brand-surface-muted);
   color: var(--brand-muted);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .booking-list-row {
-  min-height: 5.5rem;
+  min-height: 8.5rem;
   border-top: 1px solid var(--brand-border);
 }
 
 .booking-listing {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: 1.15rem;
   min-width: 0;
 }
 
 .booking-thumb {
-  width: 3.75rem;
-  height: 3.75rem;
-  flex: 0 0 3.75rem;
+  width: 6rem;
+  height: 6rem;
+  flex: 0 0 6rem;
   border-radius: 0.35rem;
   object-fit: cover;
   border: 1px solid var(--brand-border);
+}
+
+.booking-listing .h6 {
+  font-size: 1.2rem;
+}
+
+.booking-list .workflow-meta {
+  font-size: 1.08rem;
+}
+
+.booking-list .status-chip {
+  min-height: 2.15rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.96rem;
+}
+
+.booking-list-action .btn {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
 }
 
 .booking-list-action {
@@ -522,27 +635,43 @@ body {
 .request-list-row {
   display: grid;
   grid-template-columns: minmax(8rem, 1fr) minmax(11rem, 1.35fr) minmax(10rem, 1.1fr) minmax(8rem, 0.8fr) minmax(8rem, auto);
-  gap: 1rem;
+  gap: 1.5rem;
   align-items: center;
-  padding: 1rem 1.25rem;
+  padding: 1.5rem 1.75rem;
 }
 
 .request-list-header {
   background: var(--brand-surface-muted);
   color: var(--brand-muted);
-  font-size: 0.75rem;
+  font-size: 0.82rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .request-list-row {
-  min-height: 5.5rem;
+  min-height: 8rem;
   border-top: 1px solid var(--brand-border);
 }
 
 .request-list-action {
   text-align: right;
+}
+
+.request-list-row > div:first-child,
+.request-list-row .workflow-meta {
+  font-size: 1.08rem;
+}
+
+.request-list-row .status-chip {
+  min-height: 2.15rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.96rem;
+}
+
+.request-list-action .btn {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
 }
 
 .request-toolbar {

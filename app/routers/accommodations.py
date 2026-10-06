@@ -71,15 +71,25 @@ async def create_booking_request(
     message: str = Form(default=""),
 ):
     service = AccommodationService(AccommodationRepository(db))
-    booking_request = service.create_booking_request(
-        student_id=user.id,
-        booking_data=BookingRequestCreate(
-            accommodation_id=accommodation_id,
-            start_date=start_date,
-            end_date=end_date,
-            message=message,
-        ),
-    )
+    try:
+        booking_request = service.create_booking_request(
+            student_id=user.id,
+            booking_data=BookingRequestCreate(
+                accommodation_id=accommodation_id,
+                start_date=start_date,
+                end_date=end_date,
+                message=message,
+            ),
+        )
+    except ValueError as exc:
+        flash(request, str(exc), "danger")
+        return RedirectResponse(
+            url=request.url_for(
+                "accommodation_detail_view",
+                accommodation_id=accommodation_id,
+            ),
+            status_code=status.HTTP_303_SEE_OTHER,
+        )
     return RedirectResponse(
         url=request.url_for(
             "booking_request_confirmation_view",

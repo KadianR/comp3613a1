@@ -49,37 +49,47 @@
 {% block subpage_scripts %}
 <script>
   const ratingGroup = document.querySelector(".review-stars");
-  const ratingInputs = [...ratingGroup.querySelectorAll("input[name='rating']")];
-  const ratingStars = [...ratingGroup.querySelectorAll(".star-option")];
-  let selectedRating = 0;
+  if (ratingGroup) {
+    const ratingInputs = [...ratingGroup.querySelectorAll("input[name='rating']")];
+    const ratingStars = [...ratingGroup.querySelectorAll(".star-option")];
+    let selectedRating = 0;
 
-  function renderStars(rating, className) {
+    function renderStars(rating, className) {
+      ratingStars.forEach((star) => {
+        const starRating = Number(star.getAttribute("for").replace("rating-", ""));
+        star.classList.toggle(className, starRating <= rating);
+      });
+    }
+
+    ratingInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        selectedRating = Number(input.value);
+        renderStars(selectedRating, "is-active");
+        renderStars(selectedRating, "is-preview");
+      });
+    });
+
     ratingStars.forEach((star) => {
       const starRating = Number(star.getAttribute("for").replace("rating-", ""));
-      star.classList.toggle(className, starRating <= rating);
+
+      star.addEventListener("mouseenter", () => {
+        renderStars(starRating, "is-preview");
+      });
+
+      star.addEventListener("mouseleave", () => {
+        renderStars(selectedRating, "is-preview");
+      });
+
+      star.addEventListener("click", (event) => {
+        event.preventDefault();
+        selectedRating = selectedRating === starRating ? 0 : starRating;
+        ratingInputs.forEach((input) => {
+          input.checked = Number(input.value) === selectedRating;
+        });
+        renderStars(selectedRating, "is-active");
+        renderStars(selectedRating, "is-preview");
+      });
     });
   }
-
-  ratingStars.forEach((star) => {
-    const starRating = Number(star.getAttribute("for").replace("rating-", ""));
-
-    star.addEventListener("mouseenter", () => {
-      renderStars(starRating, "is-preview");
-    });
-
-    star.addEventListener("mouseleave", () => {
-      renderStars(selectedRating, "is-preview");
-    });
-
-    star.addEventListener("click", (event) => {
-      event.preventDefault();
-      selectedRating = selectedRating === starRating ? 0 : starRating;
-      ratingInputs.forEach((input) => {
-        input.checked = Number(input.value) === selectedRating;
-      });
-      renderStars(selectedRating, "is-active");
-      renderStars(selectedRating, "is-preview");
-    });
-  });
 </script>
 {% endblock %}

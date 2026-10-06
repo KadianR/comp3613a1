@@ -34,6 +34,7 @@ class AccommodationService:
         listing_data: AccommodationCreate,
         image: UploadFile | None,
     ) -> Accommodation:
+        image_data = await self._read_listing_image(image)
         listing = self.accommodation_repo.create(
             Accommodation(
                 title=listing_data.title,
@@ -44,7 +45,7 @@ class AccommodationService:
                 landlord_id=landlord_id,
             )
         )
-        await self._save_listing_image(listing.id, image)
+        self._write_listing_image(listing.id, image_data)
         return listing
 
     async def update_listing(
@@ -54,6 +55,7 @@ class AccommodationService:
         listing_data: AccommodationCreate,
         image: UploadFile | None,
     ) -> Accommodation:
+        image_data = await self._read_listing_image(image)
         listing = self.accommodation_repo.update_owned(
             accommodation_id=accommodation_id,
             landlord_id=landlord_id,
@@ -64,26 +66,42 @@ class AccommodationService:
         )
         if listing is None:
             raise ValueError("Property not found")
-        await self._save_listing_image(listing.id, image)
+        self._write_listing_image(listing.id, image_data)
         return listing
 
-    async def _save_listing_image(self, listing_id: int, image: UploadFile | None) -> None:
+    async def _read_listing_image(self, image: UploadFile | None) -> tuple[str, bytes] | None:
         if not image or not image.filename:
-            return
+            return None
         allowed_types = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp", "image/gif": ".gif"}
         suffix = allowed_types.get(image.content_type or "")
         if suffix is None:
             raise ValueError("Upload a JPG, PNG, WEBP, or GIF image")
+        image_data = await image.read(5 * 1024 * 1024 + 1)
+        if len(image_data) > 5 * 1024 * 1024:
+            raise ValueError("Property images must be 5 MB or smaller")
+        return suffix, image_data
+
+    @staticmethod
+    def _write_listing_image(listing_id: int, image_data: tuple[str, bytes] | None) -> None:
+        if image_data is None:
+            return
+        suffix, contents = image_data
         upload_dir = Path("app/static/uploads")
         upload_dir.mkdir(parents=True, exist_ok=True)
         image_path = upload_dir / f"accommodation-{listing_id}-{uuid4().hex}{suffix}"
-        image_path.write_bytes(await image.read())
+        image_path.write_bytes(contents)
 
     def create_booking_request(
         self,
         student_id: int,
         booking_data: BookingRequestCreate,
     ) -> BookingRequest:
+        if booking_data.start_date < date.today():
+            raise ValueError("Start date cannot be in the past")
+        if booking_data.end_date <= booking_data.start_date:
+            raise ValueError("End date must be after the start date")
+        if self.accommodation_repo.get_available(booking_data.accommodation_id) is None:
+            raise ValueError("This accommodation is no longer available")
         booking_request = BookingRequest(
             student_id=student_id,
             accommodation_id=booking_data.accommodation_id,

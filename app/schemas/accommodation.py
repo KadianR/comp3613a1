@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlmodel import SQLModel
+from sqlmodel import Field, SQLModel
 
 
 class BookingRequestCreate(SQLModel):
@@ -15,7 +15,7 @@ class AccommodationCreate(SQLModel):
     title: str
     address: str
     description: str
-    price_per_month: Decimal
+    price_per_month: Decimal = Field(gt=0)
 
 
 class StayReviewCreate(SQLModel):

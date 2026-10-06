@@ -36,8 +36,12 @@ engine = create_engine(
 def create_db_and_tables() -> None:
     # Ensure model modules are imported so tables are registered on metadata.
     import app.models  # noqa: F401
+    from app.models.accommodation import StayReview
 
     SQLModel.metadata.create_all(engine)
+    for index in StayReview.__table__.indexes:
+        if index.name == "uq_stayreview_booking_request_id":
+            index.create(engine, checkfirst=True)
 
 
 def drop_all() -> None:

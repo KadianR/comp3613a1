@@ -7,22 +7,56 @@
     <a class="brand-wordmark" href="{{ url_for('index_view') }}">Student Accommodation</a>
   </header>
 
-  <main class="landing-hero">
-    <p class="landing-kicker">Find a place that feels like home</p>
-    <h1 class="brand-wordmark">Student Accommodation</h1>
-    <p class="landing-lead">
-      Search comfortable accommodation, send booking requests, and keep track of your stay in one welcoming place.
-    </p>
-    <div class="landing-cta">
-      {% if user_logged_in %}
-      <a class="btn-landing btn-landing-primary" href="{{ app_home }}">Continue to app</a>
-      {% else %}
-      <a class="btn-landing btn-landing-primary" href="{{ url_for('register_view') }}">Create account</a>
-      <a class="btn-landing btn-landing-ghost" href="{{ url_for('login_view') }}?role=student">Student sign in</a>
-      <a class="btn-landing btn-landing-ghost" href="{{ url_for('login_view') }}?role=landlord">Landlord sign in</a>
-      {% endif %}
+  <div class="landing-stage">
+    <main class="landing-hero">
+      <p class="landing-kicker">Find a place that feels like home</p>
+      <h1 class="brand-wordmark">Student Accommodation</h1>
+      <p class="landing-lead">
+        Search comfortable accommodation, send booking requests, and keep track of your stay in one welcoming place.
+      </p>
+      <div class="landing-cta">
+        {% if user_logged_in %}
+        <a class="btn-landing btn-landing-primary" href="{{ app_home }}">Continue to app</a>
+        {% else %}
+        <a class="btn-landing btn-landing-primary" href="{{ url_for('register_view') }}">Create account</a>
+        <a class="btn-landing btn-landing-ghost" href="{{ url_for('login_view') }}?role=student">Student sign in</a>
+        <a class="btn-landing btn-landing-ghost" href="{{ url_for('login_view') }}?role=landlord">Landlord sign in</a>
+        {% endif %}
+      </div>
+    </main>
+    <div id="landing-apartment-carousel" class="carousel slide landing-carousel" data-bs-ride="carousel" data-bs-interval="4800">
+      <div class="carousel-indicators">
+        <button type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Apartment photo 1"></button>
+        <button type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide-to="1" aria-label="Apartment photo 2"></button>
+        <button type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide-to="2" aria-label="Apartment photo 3"></button>
+        <button type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide-to="3" aria-label="Apartment photo 4"></button>
+        <button type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide-to="4" aria-label="Apartment photo 5"></button>
+      </div>
+      <div class="carousel-inner">
+        <div class="carousel-item active">
+          <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1400&q=88" alt="Bright contemporary apartment interior">
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=88" alt="Modern apartment with a warm, open living area">
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1400&q=88" alt="Comfortable apartment with modern furnishings">
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1400&q=88" alt="Sunlit apartment living room">
+        </div>
+        <div class="carousel-item">
+          <img src="https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1400&q=88" alt="Airy island apartment interior">
+        </div>
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide="prev" aria-label="Previous apartment photo">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#landing-apartment-carousel" data-bs-slide="next" aria-label="Next apartment photo">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      </button>
     </div>
-  </main>
+  </div>
 
   <footer class="landing-foot">
     A clear home for students and the landlords who welcome them.
