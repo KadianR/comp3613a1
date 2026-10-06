@@ -139,9 +139,9 @@ Verification note: the student confirmed the review submission works after the e
 
 ## Deployed app
 
-Phase 6. Public Render URL (not localhost). Markers open this to mark the three workflows.
+Phase 6. Public Render URL (not localhost). The web service is live at this URL; direct checks returned HTTP 200 at `/` and `{"ok":true}` at `/health`. Render PostgreSQL 16 is connected, and the database reported active connections after the deployment. Marker accounts are listed below.
 
-https://
+https://faststarter-lidu.onrender.com
 
 ## Logins
 
@@ -158,7 +158,7 @@ Every account a marker needs, including extra users you added. Starter accounts:
 
 Filled when the Guide builds the report: the agent writes chat markdown into `docs/transcripts/`; `python manage.py report` packages them.
 
-Guide packaged **5** chat(s) in `docs/transcripts/` (and `docs/transcripts.zip`).
+Guide packaged **6** chat(s) in `docs/transcripts/` (and `docs/transcripts.zip`).
 
 Index: [docs/transcripts/INDEX.md](transcripts/INDEX.md)
 
@@ -167,6 +167,7 @@ Index: [docs/transcripts/INDEX.md](transcripts/INDEX.md)
 - [`phase3-copilot`](transcripts/phase3-copilot.md)
 - [`phase4-copilot`](transcripts/phase4-copilot.md)
 - [`phase5-copilot`](transcripts/phase5-copilot.md)
+- [`phase6-copilot`](transcripts/phase6-copilot.md)
 
 ## Competency (student-judge)
 
@@ -174,7 +175,8 @@ Filled by Guide from the student-judge run when this report was built.
 
 **Judged at:** 2026-10-06
 **Student / session:** Student Accommodation / GitHub Copilot Guide sessions for `comp3613a1`
-**Evidence pass:** Re-read four native GitHub Copilot Chat sessions, the current Phase 5 Guide session, current `docs/report.md`, use-case diagram source/PNG, wireframe image, and five Guide-written transcript records. Prior transcript summary was replaced because its demo accounts/tests/deployment claims did not match the workspace.
+**Artifact:** Native Copilot chats for Phases 1–6, current `docs/report.md`, use-case sources and PNG, wireframe image, application-components diagram, and six Guide-written transcript records. Prior `docs/judge.md` ignored.
+**Evidence pass:** Re-read all six project sessions from the local session store, existing transcript markdown, current report and diagrams, and current router/model implementation. Render deployment logs and current service/database status checked in this session.
 **Phases in evidence:** 1–6 (COMP 3613; Phase 5 polish, Phase 6 deploy)
 
 ### Totals
@@ -184,58 +186,56 @@ Filled by Guide from the student-judge run when this report was built.
 | N/A (excluded) | 0 |
 | Metrics scored | 12 |
 | Scoreable max | 48 |
-| Awarded total | 41 / 48 |
-| **Overall (avg of scored)** | **3.4 / 4** |
-| Impression mark | 17 / 20 |
+| Awarded total | 42 / 48 |
+| **Overall (avg of scored)** | **3.5 / 4** |
+| Impression mark | 18 / 20 |
 
 ## Scorecard
 
 | ID | Metric | Score / 4 | In avg | Evidence |
 |----|--------|----------:|:------:|----------|
-| M1 | Phase discipline | 4 | yes | Phases 1–4 artifacts preceded Phase 5; workflows were built in sequence. Student said, “yes but dont move to workflow 2 as yet.” No premature Phase 6 work. |
-| M2 | Problem framing | 3 | yes | Student named three `Feature (user)` workflows, chose shared Sign In and View Listing Details relationships, and revised the ERD with date/FK requirements. |
-| M3 | Decision ownership | 4 | yes | Student repeatedly owned product decisions, including “admin = landlord”, the separate request-details flow, role-specific sign-in, and Trinidad and Tobago seed data. |
-| M4 | Artefact-before-code | 3 | yes | Phase 2 use-case PNG, Phase 3 ERD, and Phase 4 wireframe were present and used. The ERD was later reconciled with the implemented role-based User table. |
-| M5 | Verification habit | 3 | yes | Student verified each core workflow (“it works now”, “yes it works”, “This is good and works”, “that works now”) and continued steering polish. Late visual/data refinements were not all re-verified. |
-| M6 | Assignment fit | 3 | yes | Implementation follows Routes → Dependencies → Schemas → Services → Repositories → Models; routers call services, and the models/ERD align. Phase 6 remains outstanding. |
-| M7 | Slice explanation | 2 | yes | Student engaged with the SQLModel and thin-route checks, but the marked model snippets were already filled by the Guide and remain marked `STUDENT SNIPPET` in source; the student confirmed rather than visibly completing those model edits. |
-| M8 | Prompt quality | 4 | yes | Student prompts were phase-aware and specific, including “This works however i want this to be in another page following the wireframe” and later focused polish requests. |
-| M9 | Response to pushback | 4 | yes | Student continuously refined mismatches instead of accepting the first build: “This messes up the site, i want the image to be to the right of the screen to fill up the empty space.” |
-| M10 | Integrity | 4 | yes | No paste dump, answer-seeking, or instruction override observed. Student corrections were grounded in the project; `python manage.py skills-verify` passed. |
-| M11 | Provenance continuity | 3 | yes | The same three workflows, use-case decisions, ERD changes, and wireframe carry through all phases. The stale transcript summary was replaced with session-backed records. |
-| M12 | Sincerity trajectory | 4 | yes | No suspicion spiral was needed; turns remained consistent and goal-directed, e.g. “okay this is good.” |
+| M1 | Phase discipline | 4 | yes | Phases 1–4 artifacts preceded implementation; Phase 5 stayed one workflow at a time; Phase 6 followed extensive polish. Student said, “yes but dont move to workflow 2 as yet.” |
+| M2 | Problem framing | 3 | yes | Student named all three `Feature (user)` workflows, chose shared Sign In and a separate View Listing Details use case, and revised the model with booking dates and a review FK. |
+| M3 | Decision ownership | 4 | yes | Student steered product behavior, including “admin = landlord,” the request-details flow, role-specific sign-in, and Trinidad and Tobago listing data. |
+| M4 | Artefact-before-code | 3 | yes | UML, ERD, and student wireframe are present and used. The implementation reconciles the ERD concepts with the actual role-based `User` table. |
+| M5 | Verification habit | 3 | yes | Student verified each core workflow (“it works now,” “yes it works,” “This is good and works,” “that works now”) and reported concrete failures. Some final visual refinements were not separately clicked through. |
+| M6 | Assignment fit | 4 | yes | Workflows follow the wireframe and layered architecture. Current routers call services; a workspace search found no inline SQL/session queries in `app/routers/`. Render app and PostgreSQL are live after polish. |
+| M7 | Slice explanation | 2 | yes | Student engaged with model and thin-route checks (“its good as is,” “done”). Model placeholder markers have since been removed from `app/models/accommodation.py`; one route marker remains in `app/routers/landlord_requests.py`, and independent authorship of every snippet is not evident. |
+| M8 | Prompt quality | 4 | yes | Phase-tagged prompts and focused feedback were specific, including “This works however i want this to be in another page following the wireframe.” |
+| M9 | Response to pushback | 4 | yes | Student kept refining mismatches, e.g. “This messes up the site, i want the image to be to the right of the screen to fill up the empty space,” until approving the result. |
+| M10 | Integrity | 4 | yes | No laundering or answer-seeking flags appeared in the six native chats. Skill-integrity status is pass. |
+| M11 | Provenance continuity | 3 | yes | The same workflows, relationship choices, ERD, and wireframe carry through Phases 1–6. Copilot session records and Guide transcripts are available. |
+| M12 | Sincerity trajectory | 4 | yes | No suspicion spiral was needed; turns remained consistent and goal-directed across the phases. |
 
 ## Strengths
-- Strong ownership of all three workflows and repeated corrections to match the student-created wireframe.
-- Sustained Phase 5 polish across search, bookings, landlord review, completed-stay review, role-aware authentication, and visual design.
-- Student verified the core workflows and reported concrete failures, including search data and review submission, which led to root-cause fixes.
-- ERD and model relationships were reconciled; startup and schema checks pass.
+- Student owned all three workflows, use-case decisions, relationship changes, and wireframe-driven UI direction.
+- Phase 5 included substantial implementation, student verification, and repeated workflow/model/UI polish rather than accepting the first build.
+- Student reported concrete failures in search and review submission, leading to root-cause fixes.
+- Phase 6 deployed the app and PostgreSQL. The final Render deployment includes the URI-masking fix and rotated database credential; demo login records were not changed.
 
 ## Gaps (priority order)
-1. The required SQLModel snippet was not visibly authored by the student; source still contains `STUDENT SNIPPET` markers for Accommodation status, BookingRequest status, and StayReview rating. Practice making and explaining one small model change in each workflow.
-2. Phase 6 deployment is not complete: no public Render URL or deployed workflow verification is recorded.
-3. The YouTube presentation URL is still blank in `docs/report.md`.
-4. The repository has no collected pytest tests. Core workflows were manually verified, but there is no automated regression coverage; the latest property/image and landing-carousel refinements also lack an explicit student click-through note.
+1. Snippet authorship remains partially unclear. Model placeholder markers have been removed from `app/models/accommodation.py`; a `STUDENT SNIPPET` marker remains on the landlord-requests route, and the chat does not establish independent authorship of every model snippet.
+2. No automated pytest suite was collected; workflow verification is recorded as manual.
+3. The YouTube presentation URL remains blank in `docs/report.md`.
 
 ## Phase gate status
 | Phase | Status | Note |
 |-------|--------|------|
 | 1 | met | Student selected Student Accommodation and named three workflows. |
-| 2 | met | Use-case relationships and layout were student-steered; UML source and PNG exist. |
-| 3 | met | ERD exists and student requested date-range and review-verification fields. |
-| 4 | met | Student wireframe is embedded in the report and covers the three workflows. |
-| 5 | met | Theme, one-workflow-at-a-time implementation, student verification, and substantial polish are recorded. Model-snippet authorship remains a learning gap. |
-| 6 | not met | No public Render URL or deployed Postgres/web service is recorded. |
+| 2 | met | Student steered include/extend, shared Sign In, and use-case layout; UML source and PNG exist. |
+| 3 | met | ERD exists; student requested booking dates and review-verification FK. |
+| 4 | met | Student wireframe is embedded and covers all three workflows. |
+| 5 | met | Theme, sequential implementation, student verification, and extensive polish are recorded. Snippet authorship remains a learning gap. |
+| 6 | met | Public Render URL and marker logins are in the report; web service and PostgreSQL are live and verified. |
 
 ## Recommended next practice
-- Before deployment, add a small focused test set for date validation, final landlord decisions, and one-review-per-booking; then complete a final local click-through of property image upload/edit and the landing carousel.
+- Complete one small SQLModel field and one thin route snippet in the actual files, then explain how the route reaches its service without performing persistence itself.
 
 ## Integrity note
-- Clean. No laundering flags or sincerity blocks were found. Course skill integrity verification passed. An earlier transcript summary contained claims inconsistent with the current workspace; it was replaced using the available session records.
+- Clean. No paste dump, instruction override, edited course skills, or sincerity blocks were found. Skill integrity verification passed.
 
 ## Provenance flags
-- No student-authored paste dump or instruction override observed.
-- The current workspace has a Phase 5 session and four earlier Guide sessions in the local Copilot session store; the transcript index now records all five.
+- None observed. Six native project chats were available: Phases 1–6.
 
 ## Sincerity log summary
 - Blocks found: 0 | max round: N/A | min/mean/final confidence: N/A | trend: N/A | cleared: N/A (no suspicion protocol needed)

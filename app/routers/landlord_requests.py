@@ -20,7 +20,6 @@ async def landlord_requests_view(
     status_filter: str | None = Query(default=None),
 ):
     service = AccommodationService(AccommodationRepository(db))
-    # STUDENT SNIPPET: keep this route thin and pass the service result to the template.
     requests = service.list_landlord_requests(user.id, status_filter)
 
     return templates.TemplateResponse(
