@@ -1,0 +1,63 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Booking requests{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="workflow-header">
+    <p class="workflow-eyebrow">Landlord dashboard</p>
+    <h1 class="h3 mb-1">Booking requests</h1>
+    <p class="text-muted mb-0">Review requests for your accommodation and choose a response.</p>
+  </div>
+
+  <div class="request-toolbar surface-card mb-4">
+    <div class="request-status-filters" role="group" aria-label="Filter booking requests">
+      <a class="status-filter {% if not status_filter %}active{% endif %}" href="{{ url_for('landlord_requests_view') }}">All</a>
+      <a class="status-filter {% if status_filter == 'pending' %}active{% endif %}" href="{{ url_for('landlord_requests_view') }}?status_filter=pending">Pending</a>
+      <a class="status-filter {% if status_filter == 'approved' %}active{% endif %}" href="{{ url_for('landlord_requests_view') }}?status_filter=approved">Approved</a>
+      <a class="status-filter {% if status_filter == 'declined' %}active{% endif %}" href="{{ url_for('landlord_requests_view') }}?status_filter=declined">Declined</a>
+    </div>
+    <form method="post" action="{{ url_for('clear_declined_requests') }}">
+      <button class="btn btn-outline-secondary btn-sm" type="submit">
+        <span class="material-symbols-outlined align-middle me-1">delete_sweep</span>Clear declined
+      </button>
+    </form>
+  </div>
+
+  {% if requests %}
+  <div class="surface-card request-list" role="list">
+    <div class="request-list-header" aria-hidden="true">
+      <span>Student</span>
+      <span>Listing</span>
+      <span>Duration</span>
+      <span>Status</span>
+      <span>Action</span>
+    </div>
+    {% for item in requests %}
+    <div class="request-list-row" role="listitem">
+      <div>
+        <strong>{{ item.student.username }}</strong>
+      </div>
+      <div class="workflow-meta">{{ item.accommodation.title }}</div>
+      <div class="workflow-meta">{{ item.request.start_date }}<br>to {{ item.request.end_date }}</div>
+      <div><span class="status-chip status-chip-{{ item.request.status }}">{{ item.request.status|title }}</span></div>
+      <div class="request-list-action">
+        {% if item.request.status == "pending" %}
+        <a class="btn btn-primary btn-sm" href="{{ url_for('landlord_request_detail_view', request_id=item.request.id) }}">View request</a>
+        {% elif item.request.status in ["approved", "completed"] %}
+        <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('landlord_approved_request_details_view', request_id=item.request.id) }}">View details</a>
+        {% else %}
+        <span class="small text-muted">No action</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="surface-card empty-state">
+    <span class="material-symbols-outlined text-danger mb-2" style="font-size: 2.5rem;">inbox</span>
+    <h2 class="h5">No booking requests yet</h2>
+    <p class="text-muted mb-0">New student requests will appear here.</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

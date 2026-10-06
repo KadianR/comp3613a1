@@ -1,0 +1,62 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Booking decision{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  {% if booking.request.status == "approved" %}
+  <div class="decision-banner decision-banner-approved">
+    <span class="material-symbols-outlined">check_circle</span>
+    <strong>You approved this booking request.</strong>
+  </div>
+  {% elif booking.request.status == "completed" %}
+  <div class="decision-banner decision-banner-approved">
+    <span class="material-symbols-outlined">task_alt</span>
+    <strong>This booking is complete.</strong>
+  </div>
+  {% else %}
+  <div class="decision-banner decision-banner-declined">
+    <span class="material-symbols-outlined">cancel</span>
+    <strong>You declined this booking request.</strong>
+  </div>
+  {% endif %}
+
+  <div class="surface-card outcome-card mt-4">
+    <img class="outcome-image" src="{{ accommodation_image(booking.accommodation) }}"
+      alt="Placeholder image for {{ booking.accommodation.title }}">
+    <div class="outcome-details">
+      <p class="workflow-eyebrow">Booking request</p>
+      <h1 class="h3 mb-1">{{ booking.accommodation.title }}</h1>
+      <p class="workflow-meta mb-4">{{ booking.accommodation.address }}</p>
+      <dl class="row mb-0">
+        <dt class="col-sm-3 workflow-meta fw-normal">Student</dt>
+        <dd class="col-sm-9">{{ booking.student.username }}</dd>
+        <dt class="col-sm-3 workflow-meta fw-normal">Duration</dt>
+        <dd class="col-sm-9">{{ booking.request.start_date }} to {{ booking.request.end_date }}</dd>
+        <dt class="col-sm-3 workflow-meta fw-normal">Rent</dt>
+        <dd class="col-sm-9">TT${{ booking.accommodation.price_per_month }} / month</dd>
+      </dl>
+      <div class="mt-4">
+        {% if booking.request.status in ["approved", "completed"] %}
+        <button class="btn btn-primary" type="button" disabled>Approved</button>
+        {% else %}
+        <button class="btn btn-outline-secondary" type="button" disabled>Declined</button>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if booking.request.status == "approved" %}
+  <div class="complete-action-bar surface-card mt-4">
+    <div>
+      <h2 class="h5 mb-1">Mark booking complete</h2>
+      <p class="text-muted mb-0">Available after the booking end date.</p>
+    </div>
+    <form method="post" action="{{ url_for('mark_booking_complete', request_id=booking.request.id) }}">
+      <button class="btn btn-primary" type="submit" {% if not can_complete %}disabled{% endif %}>Mark complete</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <a class="btn btn-outline-secondary mt-4" href="{{ url_for('landlord_requests_view') }}">Return to booking requests</a>
+</div>
+{% endblock %}

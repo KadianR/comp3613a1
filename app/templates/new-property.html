@@ -1,0 +1,50 @@
+{% extends "authenticated-base.html" %}
+{% block title %}List new property{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('landlord_properties_view') }}">← Back to My Property</a>
+  <div class="workflow-header mt-3">
+    <p class="workflow-eyebrow">Landlord dashboard</p>
+    <h1 class="h3 mb-1">List new property</h1>
+    <p class="text-muted mb-0">Add a clear listing so students can find and request it.</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-xl-8">
+      <form class="surface-card p-4 p-lg-5" method="post" action="{{ url_for('create_property') }}" enctype="multipart/form-data">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <label class="form-label" for="title">Listing title</label>
+            <input class="form-control" id="title" name="title" type="text" placeholder="e.g. Riverside House" required>
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="price-per-month">Cost / month</label>
+            <div class="input-group">
+              <span class="input-group-text">TT$</span>
+              <input class="form-control" id="price-per-month" name="price_per_month" type="number" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="address">Address</label>
+            <input class="form-control" id="address" name="address" type="text" required>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="5" placeholder="Describe the space, furnishings, and nearby amenities" required></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="image">Property image <span class="text-muted">(optional)</span></label>
+            <input class="form-control" id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+            <div class="form-text">JPG, PNG, WEBP, or GIF. A placeholder is used when no image is uploaded.</div>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap justify-content-end gap-2 mt-4">
+          <a class="btn btn-outline-secondary" href="{{ url_for('landlord_properties_view') }}">Cancel</a>
+          <button class="btn btn-primary" type="submit"><span class="material-symbols-outlined align-middle me-1">publish</span>Publish property</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "authenticated-base.html" %}
+{% block title %}View booking request{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('landlord_requests_view') }}">← Back to booking requests</a>
+
+  <div class="row g-4 mt-1">
+    <div class="col-12">
+      <div class="surface-card detail-surface h-100">
+        <img class="request-detail-image" src="{{ accommodation_image(booking.accommodation) }}"
+          alt="Placeholder image for {{ booking.accommodation.title }}">
+        <p class="workflow-eyebrow">Booking request</p>
+        <div class="d-flex align-items-start justify-content-between gap-3 mb-4">
+          <h1 class="h2 mb-0">{{ booking.student.username }}</h1>
+          <span class="status-chip status-chip-{{ booking.request.status }}">{{ booking.request.status|title }}</span>
+        </div>
+        <dl class="row mb-0">
+          <dt class="col-sm-4 text-muted fw-normal">Listing</dt>
+          <dd class="col-sm-8">{{ booking.accommodation.title }}</dd>
+          <dt class="col-sm-4 text-muted fw-normal">Duration</dt>
+          <dd class="col-sm-8">{{ booking.request.start_date }} to {{ booking.request.end_date }}</dd>
+          <dt class="col-sm-4 text-muted fw-normal">Student message</dt>
+          <dd class="col-sm-8">{{ booking.request.message or "No message provided." }}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+
+  <div class="request-decision-footer surface-card mt-4">
+    <div>
+      <h2 class="h5 mb-1">Decision</h2>
+      <p class="text-muted mb-0">Choose whether to accept this booking request.</p>
+    </div>
+    {% if booking.request.status == "pending" %}
+    <div class="d-flex gap-2">
+      <form method="post" action="{{ url_for('landlord_request_decision', request_id=booking.request.id) }}">
+        <input type="hidden" name="decision" value="approved">
+        <button class="btn btn-primary" type="submit">Approve</button>
+      </form>
+      <form method="post" action="{{ url_for('landlord_request_decision', request_id=booking.request.id) }}">
+        <input type="hidden" name="decision" value="declined">
+        <button class="btn btn-outline-secondary" type="submit">Decline</button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

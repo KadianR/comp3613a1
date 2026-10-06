@@ -1,14 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Sign in{% endblock %}
+{% block title %}{{ "Landlord" if login_role == "landlord" else "Student" }} sign in{% endblock %}
 
 {% block content %}
 <div class="auth-shell">
   <div class="auth-panel">
     <a class="auth-back" href="{{ url_for('index_view') }}">← Home</a>
-    <div class="brand-wordmark">FastStarter</div>
-    <p class="auth-tagline">Sign in to continue</p>
+    <div class="brand-wordmark">Student Accommodation</div>
+    {% if login_role == "landlord" %}
+    <p class="auth-eyebrow">Landlord portal</p>
+    <p class="auth-tagline">Landlord sign in</p>
+    {% else %}
+    <p class="auth-eyebrow">Student portal</p>
+    <p class="auth-tagline">Student sign in</p>
+    {% endif %}
 
     <form method="POST" action="{{ url_for('login_action_ajax') }}">
+      <input type="hidden" name="role" value="{{ login_role }}">
       <div class="mb-3">
         <label class="form-label" for="username">Username</label>
         <input class="form-control" type="text" id="username" name="username" required autofocus>
@@ -19,9 +26,17 @@
       </div>
       <div class="d-grid gap-2 mb-3">
         <button class="btn btn-primary btn-lg" type="submit">Sign in</button>
+        {% if login_role == "student" %}
         <a class="btn btn-outline-secondary" href="{{ url_for('register_view') }}">Create an account</a>
+        {% endif %}
       </div>
     </form>
+
+    {% if login_role == "landlord" %}
+    <p class="text-center text-muted small mb-0">Are you a student? <a href="{{ url_for('login_view') }}?role=student">Student sign in</a></p>
+    {% else %}
+    <p class="text-center text-muted small mb-0">Are you a landlord? <a href="{{ url_for('login_view') }}?role=landlord">Landlord sign in</a></p>
+    {% endif %}
 
     {% for message in get_flashed_messages(request) %}
     <div class="alert alert-{{ message.type }} mb-0" role="alert">{{ message.message }}</div>

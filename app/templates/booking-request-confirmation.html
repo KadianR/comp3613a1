@@ -1,0 +1,49 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Booking request{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="workflow-header">
+    <p class="workflow-eyebrow">Booking requests</p>
+    <h1 class="h3 mb-1">Your booking request</h1>
+    <p class="text-muted mb-0">Your request has been sent to the landlord.</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-xl-9">
+      <div class="surface-card confirmation-card">
+        <div class="confirmation-banner">
+          <span class="material-symbols-outlined">schedule</span>
+          <div>
+            <strong>Booking request</strong>
+            <span>Pending landlord response</span>
+          </div>
+        </div>
+
+        <div class="row g-0">
+          <div class="col-md-5">
+            <img class="confirmation-image" src="{{ accommodation_image(booking.accommodation) }}"
+              alt="Placeholder image for {{ booking.accommodation.title }}">
+          </div>
+          <div class="col-md-7 confirmation-details">
+            <h2 class="h4 mb-1">{{ booking.accommodation.title }}</h2>
+            <p class="workflow-meta mb-4">{{ booking.accommodation.address }}</p>
+            <dl class="row mb-0">
+              <dt class="col-sm-5 workflow-meta fw-normal">Duration</dt>
+              <dd class="col-sm-7">{{ booking.request.start_date }} to {{ booking.request.end_date }}</dd>
+              <dt class="col-sm-5 workflow-meta fw-normal">Price</dt>
+              <dd class="col-sm-7">TT${{ booking.accommodation.price_per_month }} / month</dd>
+              <dt class="col-sm-5 workflow-meta fw-normal">Status</dt>
+              <dd class="col-sm-7"><span class="status-chip status-chip-pending">Pending</span></dd>
+            </dl>
+          </div>
+        </div>
+
+        <div class="confirmation-actions">
+          <a class="btn btn-primary" href="{{ url_for('student_bookings_view') }}">Return to my bookings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

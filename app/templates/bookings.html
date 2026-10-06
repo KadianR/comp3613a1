@@ -1,0 +1,63 @@
+{% extends "authenticated-base.html" %}
+{% block title %}My bookings{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="workflow-header">
+    <p class="workflow-eyebrow">Student dashboard</p>
+    <h1 class="h3 mb-1">My bookings</h1>
+    <p class="text-muted mb-0">Track the accommodation requests you have sent.</p>
+  </div>
+
+  {% if bookings %}
+  <div class="surface-card booking-list" role="list">
+    <div class="booking-list-header" aria-hidden="true">
+      <span>Listing</span>
+      <span>Duration</span>
+      <span>Status</span>
+      <span>Action</span>
+    </div>
+    {% for booking in bookings %}
+    <div class="booking-list-row" role="listitem">
+      <div class="booking-listing">
+        <img class="booking-thumb" src="{{ accommodation_image(booking.accommodation) }}"
+          alt="Placeholder image for {{ booking.accommodation.title }}">
+        <div>
+          <h2 class="h6 mb-1">{{ booking.accommodation.title }}</h2>
+          <p class="workflow-meta mb-0">{{ booking.accommodation.address }}</p>
+        </div>
+      </div>
+      <div class="workflow-meta">
+        {{ booking.request.start_date }}<br>to {{ booking.request.end_date }}
+      </div>
+      <div>
+        {% if booking.completed %}
+        <span class="status-chip status-chip-completed">Completed</span>
+        {% elif booking.currently_happening %}
+        <span class="status-chip status-chip-approved">Currently happening</span>
+        {% else %}
+        <span class="status-chip status-chip-{{ booking.request.status }}">{{ booking.request.status|title }}</span>
+        {% endif %}
+      </div>
+      <div class="booking-list-action">
+        {% if booking.completed and not booking.review %}
+        <a class="btn btn-primary btn-sm" href="{{ url_for('student_review_view', booking_request_id=booking.request.id) }}">Review stay</a>
+        {% elif booking.review %}
+        <span class="small text-success">Reviewed</span>
+        {% else %}
+        <span class="small text-muted">No action</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="surface-card empty-state">
+    <span class="material-symbols-outlined text-danger mb-2" style="font-size: 2.5rem;">event_note</span>
+    <h2 class="h5">No booking requests yet</h2>
+    <p class="text-muted mb-3">Search available accommodation when you are ready to plan your stay.</p>
+    <a class="btn btn-primary" href="{{ url_for('accommodation_search_view') }}">Search accommodation</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

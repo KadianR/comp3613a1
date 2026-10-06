@@ -1,9 +1,32 @@
 {% extends "authenticated-base.html" %}
-{% block title %}Home{% endblock %}
+{% block title %}Student home{% endblock %}
 
 {% block subpage_content %}
 <div class="container-fluid py-2">
-  <h1 class="h4 mb-2">Home</h1>
-  <p class="text-muted mb-0">Workflow screens replace this shell in Phase 5 implement.</p>
+  <div class="workflow-header d-flex flex-wrap align-items-end justify-content-between gap-3">
+    <div>
+      <p class="workflow-eyebrow">Student dashboard</p>
+      <h1 class="h3 mb-1">Find your next home</h1>
+      <p class="text-muted mb-0">Search accommodation and keep your requests in one place.</p>
+    </div>
+    <a class="btn btn-primary" href="{{ url_for('accommodation_search_view') }}">Search accommodation</a>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-6 col-xl-4">
+      <div class="surface-card dashboard-tile">
+        <span class="material-symbols-outlined text-danger mb-3">search</span>
+        <h2 class="h5">Browse available places</h2>
+        <p class="text-muted mb-0">Explore listings by title and open a place that suits your study plans.</p>
+      </div>
+    </div>
+    <div class="col-md-6 col-xl-4">
+      <div class="surface-card dashboard-tile">
+        <span class="material-symbols-outlined text-danger mb-3">event_available</span>
+        <h2 class="h5">Request a stay</h2>
+        <p class="text-muted mb-0">Choose your dates and send a booking request to the landlord.</p>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

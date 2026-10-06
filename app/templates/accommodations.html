@@ -1,0 +1,70 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Search accommodation{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <div class="workflow-header">
+    <p class="workflow-eyebrow">Student accommodation</p>
+    <h1 class="h3 mb-1">Find a place that feels like home</h1>
+    <p class="text-muted mb-0">Browse available listings and choose where you would like to stay.</p>
+  </div>
+
+  <form class="surface-card search-controls mb-4" method="get" action="{{ url_for('accommodation_search_view') }}">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="material-symbols-outlined text-danger">tune</span>
+      <h2 class="h5 mb-0">Search and sort</h2>
+    </div>
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-7">
+        <label class="form-label fw-semibold" for="accommodation-query">Search listings</label>
+        <input class="form-control" id="accommodation-query" name="query" value="{{ query }}"
+          placeholder="Search by title" type="search">
+      </div>
+      <div class="col-sm-8 col-lg-3">
+        <label class="form-label fw-semibold" for="sort-listings">Sort by</label>
+        <select class="form-select" id="sort-listings" name="sort">
+          <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+          <option value="lowest_price" {% if sort == "lowest_price" %}selected{% endif %}>Lowest price</option>
+          <option value="highest_price" {% if sort == "highest_price" %}selected{% endif %}>Highest price</option>
+          <option value="highest_rating" {% if sort == "highest_rating" %}selected{% endif %}>Highest rating</option>
+        </select>
+      </div>
+      <div class="col-sm-4 col-lg-2">
+        <button class="btn btn-primary w-100" type="submit">
+          <span class="material-symbols-outlined align-middle me-1">search</span>Apply
+        </button>
+      </div>
+    </div>
+  </form>
+
+  <div>
+      {% if accommodations %}
+      <div class="row g-3">
+        {% for accommodation in accommodations %}
+        <div class="col-md-6">
+          <article class="surface-card listing-card">
+            <img class="listing-image" src="{{ accommodation_image(accommodation) }}"
+              alt="Placeholder image for {{ accommodation.title }}">
+            <p class="small text-uppercase fw-semibold text-danger mb-2">Available</p>
+            <h2 class="h5">{{ accommodation.title }}</h2>
+            <p class="workflow-meta mb-2">{{ accommodation.address }}</p>
+            <p class="mb-3">{{ accommodation.description }}</p>
+            <div class="d-flex align-items-center justify-content-between gap-3">
+              <p class="fw-semibold mb-0">TT${{ accommodation.price_per_month }} / month</p>
+              <a class="btn btn-primary btn-sm" href="{{ url_for('accommodation_detail_view', accommodation_id=accommodation.id) }}">View details</a>
+            </div>
+          </article>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="surface-card empty-state">
+        <span class="material-symbols-outlined text-danger mb-2" style="font-size: 2.5rem;">home_work</span>
+        <h2 class="h5">No available listings yet</h2>
+        <p class="text-muted mb-0">Try a different search or sort option.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from datetime import date, timedelta
 from pathlib import Path
 
 
@@ -53,6 +54,10 @@ def cmd_seed(args: argparse.Namespace) -> None:
     admin / adminpass   (admin)
     """
     from app.database import ensure_db_and_tables, get_cli_session
+    from sqlmodel import select
+
+    from app.models.accommodation import Accommodation, BookingRequest
+    from app.repositories.accommodation import AccommodationRepository
     from app.repositories.user import UserRepository
     from app.schemas.user import AdminCreate, RegularUserCreate
     from app.utilities.security import encrypt_password
@@ -63,6 +68,8 @@ def cmd_seed(args: argparse.Namespace) -> None:
     demo_users = [
         ("bob", "bob@example.com", "bobpass", "regular_user"),
         ("admin", "admin@example.com", "adminpass", "admin"),
+        ("alice", "alice@example.com", "alicepass", "regular_user"),
+        ("carmen", "carmen@example.com", "carmenpass", "regular_user"),
     ]
 
     created = 0
@@ -70,9 +77,16 @@ def cmd_seed(args: argparse.Namespace) -> None:
     with get_cli_session() as session:
         repo = UserRepository(session)
         for username, email, password, role in demo_users:
-            if repo.get_by_username(username):
-                print(f"  skip  {username} (already exists)")
-                skipped += 1
+            existing_user = repo.get_by_username(username)
+            if existing_user:
+                if existing_user.role != role:
+                    existing_user.role = role
+                    session.add(existing_user)
+                    session.commit()
+                    print(f"  update {username} ({role})")
+                else:
+                    print(f"  skip  {username} (already exists)")
+                    skipped += 1
                 continue
             payload_cls = AdminCreate if role == "admin" else RegularUserCreate
             repo.create(
@@ -85,6 +99,136 @@ def cmd_seed(args: argparse.Namespace) -> None:
             )
             print(f"  create {username} ({role})")
             created += 1
+
+        landlord = repo.get_by_username("admin")
+        accommodation_repo = AccommodationRepository(session)
+        if landlord:
+            available_listings = accommodation_repo.list_available()
+            riverside = next(
+                (listing for listing in available_listings if listing.title == "Savannah Heights"),
+                None,
+            )
+            if riverside is None:
+                riverside = accommodation_repo.create(
+                    Accommodation(
+                        title="Savannah Heights",
+                        address="12 Ariapita Avenue, Port of Spain, Trinidad",
+                        description="A bright furnished apartment near Queen's Park Savannah, restaurants, and public transport.",
+                        price_per_month=4800,
+                        image_url="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85",
+                        status="available",
+                        landlord_id=landlord.id,
+                    )
+                )
+                print("  create Savannah Heights (accommodation)")
+            elif riverside.landlord_id != landlord.id:
+                riverside.landlord_id = landlord.id
+                session.add(riverside)
+                session.commit()
+                print("  update Savannah Heights (landlord=admin)")
+
+            student = repo.get_by_username("bob")
+            if student:
+                existing_completed_booking = session.exec(
+                    select(BookingRequest).where(
+                        BookingRequest.student_id == student.id,
+                        BookingRequest.accommodation_id == riverside.id,
+                        BookingRequest.status == "approved",
+                    )
+                ).first()
+                if existing_completed_booking is None:
+                    accommodation_repo.create_booking_request(
+                        BookingRequest(
+                            student_id=student.id,
+                            accommodation_id=riverside.id,
+                            start_date=date.today() - timedelta(days=60),
+                            end_date=date.today() - timedelta(days=30),
+                            status="approved",
+                            message="I enjoyed the location and would like to share my experience.",
+                        )
+                    )
+                    print("  create completed Savannah Heights booking (review fixture)")
+
+            listing_specs = [
+                (
+                    "Maraval Garden Apartment",
+                    "18 Saddle Road, Maraval, Trinidad",
+                    "A secure, airy apartment close to schools, groceries, and the Port of Spain city centre.",
+                    6200,
+                    "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1200&q=85",
+                ),
+                (
+                    "Chaguanas Central Flat",
+                    "27 Main Road, Chaguanas, Trinidad",
+                    "A practical furnished flat near the town centre, markets, and major transport routes.",
+                    3500,
+                    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85",
+                ),
+                (
+                    "San Fernando Hill View",
+                    "6 Independence Avenue, San Fernando, Trinidad",
+                    "A comfortable apartment with views toward San Fernando Hill and a quiet residential feel.",
+                    4000,
+                    "https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=85",
+                ),
+                (
+                    "Scarborough Bay Apartment",
+                    "9 Milford Road, Scarborough, Tobago",
+                    "A breezy apartment close to the waterfront, shops, and everyday island amenities.",
+                    4500,
+                    "https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=1200&q=85",
+                ),
+            ]
+            listings = {listing.title: listing for listing in available_listings}
+            listings.setdefault("Savannah Heights", riverside)
+            for title, address, description, price_per_month, image_url in listing_specs:
+                listing = session.exec(
+                    select(Accommodation).where(Accommodation.title == title)
+                ).first()
+                if listing is None:
+                    listing = accommodation_repo.create(
+                        Accommodation(
+                            title=title,
+                            address=address,
+                            description=description,
+                            price_per_month=price_per_month,
+                            image_url=image_url,
+                            status="available",
+                            landlord_id=landlord.id,
+                        )
+                    )
+                    print(f"  create {title} (accommodation)")
+                listings[title] = listing
+
+            request_fixtures = [
+                ("alice", "Maraval Garden Apartment", "I am looking for a quiet place close to my classes."),
+                ("carmen", "Chaguanas Central Flat", "I would love to arrange a viewing and ask about transport links."),
+                ("alice", "San Fernando Hill View", "The apartment looks like a good fit for my study schedule."),
+            ]
+            for username, title, message in request_fixtures:
+                student = repo.get_by_username(username)
+                listing = listings.get(title)
+                if not student or not listing:
+                    continue
+                existing_request = session.exec(
+                    select(BookingRequest).where(
+                        BookingRequest.student_id == student.id,
+                        BookingRequest.accommodation_id == listing.id,
+                        BookingRequest.status == "pending",
+                    )
+                ).first()
+                if existing_request is None:
+                    accommodation_repo.create_booking_request(
+                        BookingRequest(
+                            student_id=student.id,
+                            accommodation_id=listing.id,
+                            start_date=date.today() + timedelta(days=14),
+                            end_date=date.today() + timedelta(days=44),
+                            status="pending",
+                            message=message,
+                        )
+                    )
+                    print(f"  create {username} request for {title}")
 
     print(f"Seed done — created {created}, skipped {skipped}.")
     print("Login with bob/bobpass or admin/adminpass")

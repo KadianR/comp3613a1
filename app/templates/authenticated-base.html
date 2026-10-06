@@ -4,57 +4,63 @@
 <style>
     body {
         overflow-x: hidden;
-        background: #f4f6f8;
+        background: var(--brand-bg-gradient);
     }
 
     #wrapper {
-        display: flex;
         min-height: 100vh;
     }
 
-    #sidebar {
-        min-width: 250px;
-        max-width: 250px;
-        min-height: 100vh;
-        transition: all 0.3s;
+    .app-topnav {
+        position: sticky;
+        top: 0;
+        z-index: 10;
         background: var(--brand-sidebar);
         color: #fff;
+        box-shadow: 0 2px 12px rgba(61, 16, 25, 0.14);
     }
 
-    #sidebar.collapsed {
-        margin-left: -250px;
-    }
-
-    #sidebar .nav-link {
+    .app-topnav .nav-link {
         color: var(--brand-sidebar-text);
         font-weight: 500;
+        border-radius: 0.35rem;
     }
 
-    #sidebar .nav-link:hover,
-    #sidebar .nav-link.active {
+    .app-topnav .nav-link:hover,
+    .app-topnav .nav-link.active {
         color: #fff;
         background-color: color-mix(in srgb, var(--brand-accent) 55%, #000);
-        border-radius: 0.5rem;
     }
 
-    #sidebar .brand-wordmark {
+    .app-topnav .brand-wordmark {
         color: #fff;
-        font-size: 1.25rem;
-        text-align: center;
-        margin: 1rem 0 1.5rem;
+        font-size: 1.3rem;
+        text-decoration: none;
+        white-space: nowrap;
     }
 
     #content {
         width: 100%;
-        padding: 1rem;
-        transition: all 0.3s;
         display: flex;
         flex-direction: column;
-        background-color: #f4f6f8;
+        background: var(--brand-bg-gradient);
     }
 
-    .navbar {
-        border-bottom: 1px solid #dee2e6;
+    .app-content-inner {
+        width: min(1180px, 100%);
+        margin: 0 auto;
+        padding: 2rem clamp(1rem, 3vw, 2rem);
+    }
+
+    @media (max-width: 767.98px) {
+        .app-topnav .navbar-nav {
+            padding-top: 0.75rem;
+        }
+
+        .app-topnav .app-welcome {
+            padding-top: 0.75rem;
+            padding-bottom: 0.25rem;
+        }
     }
 </style>
 {% block additional_styles %}{% endblock %}
@@ -62,52 +68,81 @@
 
 {% block content %}
 <div id="wrapper">
-    <nav id="sidebar" class="p-3 d-flex flex-column vh-100">
-        <div class="brand-wordmark">FastStarter</div>
-
-        <ul class="nav nav-pills flex-column gap-2 flex-grow-1">
-            <li class="nav-item">
-                <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/app') }}"
-                   href="{{ url_for('user_home_view') }}">
-                    <span class="material-symbols-outlined me-2">home</span>
-                    Home
-                </a>
-            </li>
-            <li class="nav-item mt-auto">
-                <a class="nav-link d-flex align-items-center text-danger" href="{{ url_for('logout') }}">
-                    <span class="material-symbols-outlined me-2">logout</span>
-                    Logout
-                </a>
-            </li>
-        </ul>
+    <nav class="app-topnav navbar navbar-expand-md">
+        <div class="container-fluid px-3 px-lg-4">
+            <a class="brand-wordmark" href="{{ url_for('landlord_requests_view' if user.role in ['landlord', 'admin'] else 'user_home_view') }}">Student Accommodation</a>
+            <button class="navbar-toggler border-light" type="button" data-bs-toggle="collapse" data-bs-target="#app-navigation"
+                aria-controls="app-navigation" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="material-symbols-outlined text-white">menu</span>
+            </button>
+            <div class="collapse navbar-collapse" id="app-navigation">
+                <ul class="navbar-nav ms-md-4 me-auto gap-md-2">
+                    {% if user.role not in ["landlord", "admin"] %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/app') }}"
+                           href="{{ url_for('user_home_view') }}">
+                            <span class="material-symbols-outlined me-1">home</span>
+                            Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/accommodations') }}"
+                           href="{{ url_for('accommodation_search_view') }}">
+                            <span class="material-symbols-outlined me-1">search</span>
+                            Search
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role in ["landlord", "admin"] %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/landlord/requests') }}"
+                           href="{{ url_for('landlord_requests_view') }}">
+                            <span class="material-symbols-outlined me-1">inbox</span>
+                            Booking requests
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/landlord/properties') }}"
+                           href="{{ url_for('landlord_properties_view') }}">
+                            <span class="material-symbols-outlined me-1">home_work</span>
+                            My Property
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% if user.role not in ["landlord", "admin"] %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center {{ 'active' if request.url.path.startswith('/bookings') }}"
+                           href="{{ url_for('student_bookings_view') }}">
+                            <span class="material-symbols-outlined me-1">event_note</span>
+                            My bookings
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <div class="app-welcome d-flex align-items-center gap-3">
+                    <span class="fw-semibold">Welcome, {{ user.username }}</span>
+                    <a class="nav-link d-flex align-items-center" href="{{ url_for('logout') }}">
+                        <span class="material-symbols-outlined me-1">logout</span>
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </div>
     </nav>
 
     <div id="content">
-        <nav class="navbar navbar-expand-lg bg-white mb-4 px-3 rounded-3 shadow-sm">
-            <button class="btn btn-outline-secondary" id="menu-toggle" type="button">
-                <span class="material-symbols-outlined md-dark">menu</span>
-            </button>
-            <div class="ms-auto d-flex align-items-center gap-3">
-                <span class="fw-semibold">Welcome, {{ user.username }}</span>
-            </div>
-        </nav>
-
-        <div class="row">
-            <div class="col-12">
+        <div class="app-content-inner">
+            <div class="row">
+                <div class="col-12">
                 {% for message in get_flashed_messages(request) %}
                 <div class="alert alert-{{ message.type }}" role="alert">{{ message.message }}</div>
                 {% endfor %}
+                </div>
             </div>
-        </div>
 
-        {% block subpage_content %}{% endblock %}
+            {% block subpage_content %}{% endblock %}
+        </div>
     </div>
 </div>
-
-<script>
-    document.getElementById("menu-toggle").addEventListener("click", function () {
-        document.getElementById("sidebar").classList.toggle("collapsed");
-    });
-</script>
 {% block subpage_scripts %}{% endblock %}
 {% endblock %}

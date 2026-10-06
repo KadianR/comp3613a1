@@ -1,6 +1,6 @@
 from app.repositories.user import UserRepository
 from app.utilities.security import encrypt_password, verify_password, create_access_token
-from app.schemas.user import RegularUserCreate
+from app.schemas.user import LandlordCreate, RegularUserCreate
 from typing import Optional
 
 class AuthService:
@@ -14,8 +14,9 @@ class AuthService:
         access_token = create_access_token(data={"sub": f"{user.id}", "role": user.role})
         return access_token
 
-    def register_user(self, username: str, email: str, password: str):
-        new_user = RegularUserCreate(
+    def register_user(self, username: str, email: str, password: str, role: str = "student"):
+        payload_cls = LandlordCreate if role == "landlord" else RegularUserCreate
+        new_user = payload_cls(
             username=username, 
             email=email, 
             password=encrypt_password(password)

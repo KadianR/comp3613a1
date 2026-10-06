@@ -1,0 +1,107 @@
+{% extends "authenticated-base.html" %}
+{% block title %}{{ accommodation.title }}{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('accommodation_search_view') }}">← Back to search</a>
+
+  <div class="row g-4 mt-1">
+    <div class="col-lg-7">
+      <div class="surface-card detail-surface h-100">
+        <img class="detail-image" src="{{ accommodation_image(accommodation) }}"
+          alt="Placeholder image for {{ accommodation.title }}">
+        <p class="workflow-eyebrow">Available accommodation</p>
+        <h1 class="h2 mb-2">{{ accommodation.title }}</h1>
+        <p class="text-muted mb-4">{{ accommodation.address }}</p>
+        <p class="mb-4">{{ accommodation.description }}</p>
+        <p class="detail-price mb-0">TT${{ accommodation.price_per_month }} / month</p>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="surface-card p-4">
+        <h2 class="h5 mb-1">Request this accommodation</h2>
+        <p class="text-muted mb-4">Tell the landlord when you would like to stay.</p>
+        <form method="post" action="{{ url_for('create_booking_request') }}">
+          <input type="hidden" name="accommodation_id" value="{{ accommodation.id }}">
+          <div class="mb-3">
+            <label class="form-label" for="start-date">Start date</label>
+            <input class="form-control" id="start-date" name="start_date" type="date" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="stay-months">Stay length (months)</label>
+            <div class="input-group">
+              <button class="btn btn-outline-secondary" id="decrease-months" type="button" aria-label="Decrease stay length">
+                <span class="material-symbols-outlined">remove</span>
+              </button>
+              <input class="form-control text-center" id="stay-months" name="stay_months" type="number" min="1" max="12" value="1" aria-describedby="stay-months-help">
+              <button class="btn btn-outline-secondary" id="increase-months" type="button" aria-label="Increase stay length">
+                <span class="material-symbols-outlined">add</span>
+              </button>
+            </div>
+            <div class="form-text" id="stay-months-help">The end date updates automatically.</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="end-date">End date</label>
+            <input class="form-control" id="end-date" name="end_date" type="date" readonly required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="message">Message <span class="text-muted">(optional)</span></label>
+            <textarea class="form-control" id="message" name="message" rows="4" placeholder="Tell the landlord a little about your stay"></textarea>
+          </div>
+          <button class="btn btn-primary w-100" type="submit">Send booking request</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+  (() => {
+    const startDate = document.getElementById("start-date");
+    const endDate = document.getElementById("end-date");
+    const months = document.getElementById("stay-months");
+    const decrease = document.getElementById("decrease-months");
+    const increase = document.getElementById("increase-months");
+
+    function addMonths(date, monthCount) {
+      const day = date.getDate();
+      const result = new Date(date);
+      result.setDate(1);
+      result.setMonth(result.getMonth() + monthCount);
+      const lastDay = new Date(result.getFullYear(), result.getMonth() + 1, 0).getDate();
+      result.setDate(Math.min(day, lastDay));
+      return result;
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function updateEndDate() {
+      if (!startDate.value) {
+        endDate.value = "";
+        return;
+      }
+      const selectedDate = new Date(`${startDate.value}T00:00:00`);
+      endDate.value = formatDate(addMonths(selectedDate, Number(months.value) || 1));
+    }
+
+    startDate.addEventListener("change", updateEndDate);
+    months.addEventListener("input", updateEndDate);
+    decrease.addEventListener("click", () => {
+      months.value = Math.max(1, Number(months.value) - 1);
+      updateEndDate();
+    });
+    increase.addEventListener("click", () => {
+      months.value = Math.min(12, Number(months.value) + 1);
+      updateEndDate();
+    });
+  })();
+</script>
+{% endblock %}

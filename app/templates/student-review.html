@@ -1,0 +1,85 @@
+{% extends "authenticated-base.html" %}
+{% block title %}Review {{ booking.accommodation.title }}{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid py-2">
+  <a class="auth-back" href="{{ url_for('student_bookings_view') }}">← Return to my bookings</a>
+
+  <div class="row justify-content-center mt-3">
+    <div class="col-lg-8">
+      <div class="surface-card p-4 p-lg-5">
+        <img class="review-image" src="{{ accommodation_image(booking.accommodation) }}"
+          alt="Placeholder image for {{ booking.accommodation.title }}">
+        <p class="text-uppercase small fw-semibold text-danger mb-2">Completed stay</p>
+        <h1 class="h3 mb-1">{{ booking.accommodation.title }}</h1>
+        <p class="text-muted mb-4">{{ booking.accommodation.address }} · {{ booking.request.start_date }} to {{ booking.request.end_date }}</p>
+
+        {% if booking.review %}
+        <h2 class="h5 mb-3">Your finished review</h2>
+        <p class="mb-2"><strong>Rating:</strong> {{ booking.review.rating }} / 5</p>
+        <p class="mb-4"><strong>Your review:</strong> {{ booking.review.review_text or "No written comment." }}</p>
+        <a class="btn btn-primary" href="{{ url_for('student_bookings_view') }}">Return to my bookings</a>
+        {% else %}
+        <h2 class="h5 mb-3">Share your experience</h2>
+        <form method="post" action="{{ url_for('create_stay_review', booking_request_id=booking.request.id) }}">
+          <div class="mb-3">
+            <label class="form-label" for="rating">Star rating</label>
+            <div class="review-stars" role="radiogroup" aria-label="Star rating">
+              {% for value in [1, 2, 3, 4, 5] %}
+              <input class="btn-check" id="rating-{{ value }}" name="rating" type="radio" value="{{ value }}" required>
+              <label class="star-option" for="rating-{{ value }}" aria-label="{{ value }} star{{ 's' if value != 1 else '' }}">
+                <span class="material-symbols-outlined">star</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="review-text">Your review</label>
+            <textarea class="form-control" id="review-text" name="review_text" rows="5" placeholder="Tell us about your stay" required></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit"><span class="material-symbols-outlined align-middle me-1">send</span>Submit review</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block subpage_scripts %}
+<script>
+  const ratingGroup = document.querySelector(".review-stars");
+  const ratingInputs = [...ratingGroup.querySelectorAll("input[name='rating']")];
+  const ratingStars = [...ratingGroup.querySelectorAll(".star-option")];
+  let selectedRating = 0;
+
+  function renderStars(rating, className) {
+    ratingStars.forEach((star) => {
+      const starRating = Number(star.getAttribute("for").replace("rating-", ""));
+      star.classList.toggle(className, starRating <= rating);
+    });
+  }
+
+  ratingStars.forEach((star) => {
+    const starRating = Number(star.getAttribute("for").replace("rating-", ""));
+
+    star.addEventListener("mouseenter", () => {
+      renderStars(starRating, "is-preview");
+    });
+
+    star.addEventListener("mouseleave", () => {
+      renderStars(selectedRating, "is-preview");
+    });
+
+    star.addEventListener("click", (event) => {
+      event.preventDefault();
+      selectedRating = selectedRating === starRating ? 0 : starRating;
+      ratingInputs.forEach((input) => {
+        input.checked = Number(input.value) === selectedRating;
+      });
+      renderStars(selectedRating, "is-active");
+      renderStars(selectedRating, "is-preview");
+    });
+  });
+</script>
+{% endblock %}
