@@ -27,7 +27,7 @@
 | M4 | Artefact-before-code | 3 | yes | UML, ERD, and student wireframe are present and used. The implementation reconciles the ERD concepts with the actual role-based `User` table. |
 | M5 | Verification habit | 3 | yes | Student verified each core workflow (“it works now,” “yes it works,” “This is good and works,” “that works now”) and reported concrete failures. Some final visual refinements were not separately clicked through. |
 | M6 | Assignment fit | 4 | yes | Workflows follow the wireframe and layered architecture. Current routers call services; a workspace search found no inline SQL/session queries in `app/routers/`. Render app and PostgreSQL are live after polish. |
-| M7 | Slice explanation | 2 | yes | Student engaged with model and thin-route checks (“its good as is,” “done”). Model placeholder markers have since been removed from `app/models/accommodation.py`; one route marker remains in `app/routers/landlord_requests.py`, and independent authorship of every snippet is not evident. |
+| M7 | Slice explanation | 2 | yes | Student engaged with model and thin-route checks (“its good as is,” “done”). No snippet markers remain in the current app source, but the chat records brief confirmations rather than enough explanation to establish independent authorship of each snippet. |
 | M8 | Prompt quality | 4 | yes | Phase-tagged prompts and focused feedback were specific, including “This works however i want this to be in another page following the wireframe.” |
 | M9 | Response to pushback | 4 | yes | Student kept refining mismatches, e.g. “This messes up the site, i want the image to be to the right of the screen to fill up the empty space,” until approving the result. |
 | M10 | Integrity | 4 | yes | No laundering or answer-seeking flags appeared in the six native chats. Skill-integrity status is pass. |
@@ -41,9 +41,8 @@
 - Phase 6 deployed the app and PostgreSQL. The final Render deployment includes the URI-masking fix and rotated database credential; demo login records were not changed.
 
 ## Gaps (priority order)
-1. Snippet authorship remains partially unclear. Model placeholder markers have been removed from `app/models/accommodation.py`; a `STUDENT SNIPPET` marker remains on the landlord-requests route, and the chat does not establish independent authorship of every model snippet.
+1. Snippet authorship remains partially unclear. No placeholder markers remain in the current app source, but the chat records brief confirmations and does not establish independent authorship of each required model and route snippet.
 2. No automated pytest suite was collected; workflow verification is recorded as manual.
-3. The YouTube presentation URL remains blank in `docs/report.md`.
 
 ## Phase gate status
 | Phase | Status | Note |
@@ -56,7 +55,7 @@
 | 6 | met | Public Render URL and marker logins are in the report; web service and PostgreSQL are live and verified. |
 
 ## Recommended next practice
-- Complete one small SQLModel field and one thin route snippet in the actual files, then explain how the route reaches its service without performing persistence itself.
+- Explain in your own words how one model field and the landlord requests route work together, including where persistence is performed.
 
 ## Integrity note
 - Clean. No paste dump, instruction override, edited course skills, or sincerity blocks were found. Skill integrity verification passed.

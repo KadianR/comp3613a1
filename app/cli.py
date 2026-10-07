@@ -110,6 +110,11 @@ _REVIEW_TEXT = {
 # (username, listing, kind, start offset in days, length in days, message)
 _EXTRA_BOOKINGS = [
     ("bob", "Scarborough Bay Apartment", "past", -100, 60, "I spent the semester here and would like to leave a review."),
+    ("bob", "Maraval Garden Apartment", "past", -210, 90, "A quiet semester stay near campus; I would like to review it."),
+    ("bob", "Chaguanas Central Flat", "past", -180, 60, "I stayed here during the term and would like to leave feedback."),
+    ("bob", "San Fernando Hill View", "past", -150, 75, "A comfortable past stay that I want to review."),
+    ("bob", "St. Augustine Student Studio", "past", -120, 60, "This studio worked well for my semester near UWI."),
+    ("bob", "Curepe Junction Flat", "past", -90, 45, "I finished my stay and would like to share a review."),
     ("alice", "Savannah Heights", "past", -90, 60, "Stayed for two months while on placement."),
     ("carmen", "San Fernando Hill View", "past", -75, 45, "Short stay during exam season."),
     ("anika.mohammed", "St. Augustine Student Studio", "current", -20, 90, "Moving in for the full semester."),
