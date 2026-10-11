@@ -228,11 +228,32 @@ def export_report(
             "(runs student-judge -> docs/judge.md), then re-run this command."
         )
     app_url, logins, missing = _marker_access(markdown)
+    github_section = _section(markdown, "GitHub repository")
+    github_url = re.search(r"https?://[^\s)]+", github_section)
+    youtube_section = _section(markdown, "YouTube URL")
+    youtube_url = re.search(r"https?://[^\s)]+", youtube_section)
+    agent_lines = _section(markdown, "Agent").splitlines()
+    agent_name = agent_lines[0].strip() if agent_lines else "Not provided"
+    impression_match = re.search(
+        r"(?m)^\|\s*Judge impression mark\s*\|\s*([^|]+)\|", markdown
+    )
+    judge_impression = impression_match.group(1).strip() if impression_match else "Not yet"
     dest.parent.mkdir(parents=True, exist_ok=True)
 
     pdf = _new_pdf(bool(missing))
     with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        cover = _cover_html(clean_name, clean_id, app_url, logins, integrity, missing)
+        cover = _cover_html(
+            clean_name,
+            clean_id,
+            app_url,
+            logins,
+            github_url.group(0) if github_url else "Not provided",
+            youtube_url.group(0) if youtube_url else "Not provided",
+            agent_name,
+            judge_impression,
+            integrity,
+            missing,
+        )
         body = _markdown_to_html(markdown, src.parent, Path(tmp))
         appendix = _markdown_to_html(
             appendix_markdown(transcripts),
@@ -582,6 +603,10 @@ def _cover_html(
     student_id: str,
     app_url: str,
     logins: str,
+    github_url: str,
+    youtube_url: str,
+    agent_name: str,
+    judge_impression: str,
     integrity: IntegrityResult,
     missing: list[str],
 ) -> str:
@@ -597,6 +622,10 @@ def _cover_html(
         ("Student ID", html_lib.escape(student_id), False),
         ("Deployed app", html_lib.escape(app_url), False),
         ("Logins", login_html, False),
+        ("GitHub", html_lib.escape(github_url), False),
+        ("YouTube URL", html_lib.escape(youtube_url), False),
+        ("Agent", html_lib.escape(agent_name), False),
+        ("Judge impression", html_lib.escape(judge_impression), False),
         ("Skill integrity", integrity_value, not integrity.ok),
     ]
     cells = []

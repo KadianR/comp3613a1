@@ -15,6 +15,10 @@ Do not put your student ID in this file if you will commit it. The PDF cover add
 
 Student Accommodation
 
+## Interpretation
+
+Student Accommodation is a role-based rental marketplace for students and landlords in Trinidad and Tobago. Students browse and inspect listings, submit date-bounded stay requests, track decisions, and review an eligible stay after it ends. Landlords manage their own properties, decide pending requests, and mark approved stays complete after the end date. Both actors share sign-in; the implementation represents them as roles on a single user model.
+
 ## Three workflows
 
 ### 1. Search and request accommodation (Student)
@@ -27,11 +31,11 @@ Student Accommodation
 
 ![Use case diagram](diagrams/use-case.png)
 
-Student is directly associated with Search Accommodation, View Booking Status, Request Accommodation, and View Listing Details. View Listing Details is a standalone use case, not an extension. Student and Landlord share Sign In. Approve or Decline Booking Request optionally extends Review Booking Requests, so a landlord may leave a request pending. Reviewing a completed stay remains a Student use case.
+Actors: Student and Landlord. Student is directly associated with Search Accommodation, View Booking Status, Request Accommodation, View Listing Details, and Review a Completed Stay. View Listing Details is a standalone use case, not an extension. Student and Landlord share Sign In. Approve or Decline Booking Request optionally extends Review Booking Requests, so a landlord may leave a request pending.
 
 ## Model diagram
 
-First draft. Update this section in Phase 5 when polish revises the model, and note what changed.
+Implementation-aligned model. One `User` table represents students and landlords by role. Booking requests have a date window and status; each belongs to one student and one accommodation. A stay review belongs to a student, accommodation, and booking request. The implementation enforces one review per booking with a unique index and validates ratings from 1 to 5.
 
 ```mermaid
 erDiagram
@@ -137,11 +141,25 @@ The student review flow is attached to My Bookings rather than exposed as a sepa
 
 Verification note: the student confirmed the review submission works after the existing review-table schema mismatch was corrected by restoring and populating the required student name field.
 
+### Rating and review demo polish
+
+Student search cards show each listing's average rating and review count. Landlords can open **View ratings** from My Property to see a listing's average and individual reviews. The idempotent seed command supplies demo users, listings, and reviews. It also adds five additional past stays for `bob` across distinct listings so **Review stay** can be demonstrated after running `python manage.py seed` against the local demo database. These local fixtures do not change the `bob` or `admin` credentials.
+
+Verification note: the Guide checked search ratings, the landlord ratings page, and the ownership guard with a test client. The five additional Bob fixtures were seeded to local SQLite; this does not claim the production database was modified.
+
+### Test coverage
+
+A prior Guide run reported 10 focused service tests passing. The `tests/` directory in the current checkout contains no test source, so those tests are not included or reproducible from this submission package. UI, database-constraint, and end-to-end checks remain manual.
+
 ## Deployed app
 
 Phase 6. Public Render URL (not localhost). The web service is live at this URL; direct checks returned HTTP 200 at `/` and `{"ok":true}` at `/health`. Render PostgreSQL 16 is connected, and the database reported active connections after the deployment. Marker accounts are listed below.
 
 https://faststarter-lidu.onrender.com
+
+## GitHub repository
+
+https://github.com/KadianR/comp3613a1
 
 ## Logins
 
@@ -156,6 +174,10 @@ Every account a marker needs, including extra users you added. Starter accounts:
 ## YouTube URL
 
 [Student Accommodation presentation](https://youtu.be/3JqSxpEWQV0)
+
+## Agent
+
+GitHub Copilot Agent using the `student-build` Guide skill.
 
 ## Session transcripts
 
@@ -176,10 +198,10 @@ Index: [docs/transcripts/INDEX.md](transcripts/INDEX.md)
 
 Filled by Guide from the student-judge run when this report was built.
 
-**Judged at:** 2026-10-06
+**Judged at:** 2026-10-11
 **Student / session:** Student Accommodation / GitHub Copilot Guide sessions for `comp3613a1`
 **Artifact:** Native Copilot chats for Phases 1–6, current `docs/report.md`, use-case sources and PNG, wireframe image, application-components diagram, and six Guide-written transcript records. Prior `docs/judge.md` ignored.
-**Evidence pass:** Re-read all six project sessions from the local session store, existing transcript markdown, current report and diagrams, and current router/model implementation. Render deployment logs and current service/database status checked in this session.
+**Evidence pass:** Re-read all six project sessions from the local session store, current transcript markdown, report, diagrams, routers/models, and seed fixtures. The current checkout has no test source under `tests/`; prior transcript records include a Guide-reported focused test run. Render deployment and database status were previously verified.
 **Phases in evidence:** 1–6 (COMP 3613; Phase 5 polish, Phase 6 deploy)
 
 ### Totals
@@ -191,7 +213,9 @@ Filled by Guide from the student-judge run when this report was built.
 | Scoreable max | 48 |
 | Awarded total | 42 / 48 |
 | **Overall (avg of scored)** | **3.5 / 4** |
-| Impression mark | 18 / 20 |
+| Judge impression mark | 18 / 20 |
+
+**Judge impression:** 18 / 20, derived from the overall average of 3.5 / 4 because no separate confidence log was recorded.
 
 ## Scorecard
 
@@ -201,7 +225,7 @@ Filled by Guide from the student-judge run when this report was built.
 | M2 | Problem framing | 3 | yes | Student named all three `Feature (user)` workflows, chose shared Sign In and a separate View Listing Details use case, and revised the model with booking dates and a review FK. |
 | M3 | Decision ownership | 4 | yes | Student steered product behavior, including “admin = landlord,” the request-details flow, role-specific sign-in, and Trinidad and Tobago listing data. |
 | M4 | Artefact-before-code | 3 | yes | UML, ERD, and student wireframe are present and used. The implementation reconciles the ERD concepts with the actual role-based `User` table. |
-| M5 | Verification habit | 3 | yes | Student verified each core workflow (“it works now,” “yes it works,” “This is good and works,” “that works now”) and reported concrete failures. Some final visual refinements were not separately clicked through. |
+| M5 | Verification habit | 3 | yes | Student verified each core workflow (“it works now,” “yes it works,” “This is good and works,” “that works now”) and reported concrete failures. Later ratings routes received Guide test-client checks and local fixtures were seeded; some final visual refinements were not separately clicked through by the student. |
 | M6 | Assignment fit | 4 | yes | Workflows follow the wireframe and layered architecture. Current routers call services; a workspace search found no inline SQL/session queries in `app/routers/`. Render app and PostgreSQL are live after polish. |
 | M7 | Slice explanation | 2 | yes | Student engaged with model and thin-route checks (“its good as is,” “done”). No snippet markers remain in the current app source, but the chat records brief confirmations rather than enough explanation to establish independent authorship of each snippet. |
 | M8 | Prompt quality | 4 | yes | Phase-tagged prompts and focused feedback were specific, including “This works however i want this to be in another page following the wireframe.” |
@@ -215,10 +239,11 @@ Filled by Guide from the student-judge run when this report was built.
 - Phase 5 included substantial implementation, student verification, and repeated workflow/model/UI polish rather than accepting the first build.
 - Student reported concrete failures in search and review submission, leading to root-cause fixes.
 - Phase 6 deployed the app and PostgreSQL. The final Render deployment includes the URI-masking fix and rotated database credential; demo login records were not changed.
+- Later demo polish added aggregate student-facing ratings, a landlord listing-ratings view, and five additional local past-stay fixtures for Bob to demonstrate review submission.
 
 ## Gaps (priority order)
 1. Snippet authorship remains partially unclear. No placeholder markers remain in the current app source, but the chat records brief confirmations and does not establish independent authorship of each required model and route snippet.
-2. No automated pytest suite was collected; workflow verification is recorded as manual.
+2. A prior Guide run reported 10 passing focused service tests, but test source is absent from the current checkout. UI, database-constraint, and end-to-end workflow coverage is not included in this package.
 
 ## Phase gate status
 | Phase | Status | Note |
