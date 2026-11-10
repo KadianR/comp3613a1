@@ -9,7 +9,8 @@ from app.dependencies.auth import LandlordDep
 from app.repositories.accommodation import AccommodationRepository
 from app.services.accommodation_service import AccommodationService
 from app.utilities.flash import flash
-from . import router, templates
+from . import router, api_router, templates
+from fastapi import Body
 
 
 @router.get("/landlord/requests", response_class=HTMLResponse, name="landlord_requests_view")
@@ -166,3 +167,85 @@ async def landlord_approved_request_details_view(
             "can_complete": booking_request["request"].end_date < date.today(),
         },
     )
+
+
+# API: View landlord booking requests
+@api_router.get("/landlord/requests")
+async def api_landlord_requests(
+    user: LandlordDep,
+    db: SessionDep,
+):
+    service = AccommodationService(AccommodationRepository(db))
+
+    requests = service.list_landlord_requests(
+        user.id, "pending"
+    )
+
+    return [
+        {
+            "id": item["request"].id,
+            "accommodation_id": item["request"].accommodation_id,
+            "student_id": item["request"].student_id,
+            "student_name": item["student"].username,
+            "accommodation_title": item["accommodation"].title,
+            "start_date": item["request"].start_date,
+            "end_date": item["request"].end_date,
+            "status": item["request"].status,
+            "message": item["request"].message,
+        }
+        for item in requests
+    ]
+
+
+# API: Approve or decline a booking request
+@api_router.patch("/landlord/requests/{request_id}")
+async def api_decide_booking_request(
+    request_id: int,
+    user: LandlordDep,
+    db: SessionDep,
+    decision: str = Body(embed=True),
+):
+    service = AccommodationService(AccommodationRepository(db))
+
+    try:
+        booking = service.decide_booking_request(
+            request_id=request_id,
+            landlord_id=user.id,
+            status=decision
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        ) from exc
+
+    return {
+        "id": booking.id,
+        "status": booking.status
+    }
+
+
+# API: Mark an approved stay as completed
+@api_router.patch("/landlord/requests/{request_id}/complete")
+async def api_complete_stay(
+    request_id: int,
+    user: LandlordDep,
+    db: SessionDep,
+):
+    service = AccommodationService(AccommodationRepository(db))
+
+    try:
+        booking = service.mark_booking_complete(
+            request_id=request_id,
+            landlord_id=user.id
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        ) from exc
+
+    return {
+        "id": booking.id,
+        "status": booking.status
+    }

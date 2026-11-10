@@ -10,7 +10,7 @@ from app.repositories.accommodation import AccommodationRepository
 from app.schemas.accommodation import BookingRequestCreate
 from app.services.accommodation_service import AccommodationService
 from app.utilities.flash import flash
-from . import router, templates
+from . import router, api_router, templates
 
 
 @router.get("/accommodations", response_class=HTMLResponse)
@@ -141,3 +141,116 @@ async def student_bookings_view(
             "bookings": service.list_student_requests(user.id),
         },
     )
+
+
+@api_router.get("/accommodations")
+async def api_list_accommodations(
+    user: AuthDep,
+    db: SessionDep,
+    query: str = Query(default="", max_length=100),
+    sort: str = Query(default="newest"),
+):
+    service = AccommodationService(AccommodationRepository(db))
+    listings = service.search_available(query, sort)
+
+    return [
+        {
+            "id": listing.id,
+            "title": listing.title,
+            "address": listing.address,
+            "description": listing.description,
+            "price_per_month": float(listing.price_per_month),
+            "status": listing.status,
+        }
+        for listing in listings
+    ]
+
+@api_router.get("/accommodations/{accommodation_id}")
+async def api_accommodation_details(
+    accommodation_id: int,
+    user: AuthDep,
+    db: SessionDep,
+):
+    service = AccommodationService(AccommodationRepository(db))
+
+    accommodation = service.get_available(accommodation_id)
+
+    if accommodation is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Accommodation not found"
+        )
+
+    return {
+        "id": accommodation.id,
+        "title": accommodation.title,
+        "address": accommodation.address,
+        "description": accommodation.description,
+        "price_per_month": float(accommodation.price_per_month),
+        "status": accommodation.status,
+    }
+
+
+@api_router.post("/bookings", status_code=201)
+
+async def api_create_booking(
+    
+    booking_data: BookingRequestCreate,
+    user: AuthDep,
+    db: SessionDep,
+):
+    
+    if user.role != "regular_user":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can submit bookings"
+        )
+
+    service = AccommodationService(AccommodationRepository(db))
+
+    try:
+        booking = service.create_booking_request(
+            student_id=user.id,
+            booking_data=booking_data
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        ) from exc
+
+    return {
+        "id": booking.id,
+        "accommodation_id": booking.accommodation_id,
+        "student_id": booking.student_id,
+        "start_date": booking.start_date,
+        "end_date": booking.end_date,
+        "status": booking.status,
+        "message": booking.message
+    }
+
+
+@api_router.get("/bookings/my")
+async def api_student_bookings(
+    user: AuthDep,
+    db: SessionDep,
+):
+    if user.role != "regular_user":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can view their bookings"
+        )
+
+    service = AccommodationService(AccommodationRepository(db))
+    bookings = service.list_student_requests(user.id)
+
+    return [
+        {
+            "id": item["request"].id,
+            "accommodation_id": item["request"].accommodation_id,
+            "status": item["request"].status,
+            "start_date": item["request"].start_date,
+            "end_date": item["request"].end_date,
+        }
+        for item in bookings
+    ]

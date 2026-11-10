@@ -8,7 +8,8 @@ from app.repositories.accommodation import AccommodationRepository
 from app.schemas.accommodation import StayReviewCreate
 from app.services.accommodation_service import AccommodationService
 from app.utilities.flash import flash
-from . import router, templates
+from fastapi import Body, Form, HTTPException, Request
+from . import router, api_router, templates
 
 
 @router.get(
@@ -75,3 +76,47 @@ async def create_stay_review(
         ),
         status_code=status.HTTP_303_SEE_OTHER,
     )
+
+
+# API: Submit a review for a completed stay
+@api_router.post(
+    "/bookings/{booking_request_id}/reviews",
+    status_code=201
+)
+async def api_submit_review(
+    booking_request_id: int,
+    user: AuthDep,
+    db: SessionDep,
+    rating: int = Body(embed=True),
+    review_text: str = Body(default="", embed=True),
+):
+    if user.role != "regular_user":
+        raise HTTPException(
+            status_code=403,
+            detail="Only students can submit reviews"
+        )
+
+    service = AccommodationService(AccommodationRepository(db))
+
+    try:
+        review = service.create_stay_review(
+            student_id=user.id,
+            student_name=user.username,
+            review_data=StayReviewCreate(
+                booking_request_id=booking_request_id,
+                rating=rating,
+                review_text=review_text
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc)
+        ) from exc
+
+    return {
+        "id": review.id,
+        "booking_request_id": review.booking_request_id,
+        "rating": review.rating,
+        "review_text": review.review_text
+    }
