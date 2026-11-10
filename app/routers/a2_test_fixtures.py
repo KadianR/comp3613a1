@@ -32,7 +32,7 @@ class PostmanSeedRequest(BaseModel):
 def _local_test_mode(request: Request) -> bool:
     settings = get_settings()
     return (
-        os.getenv("A2_ENABLE_POSTMAN_FIXTURES") == "1"
+        settings.a2_enable_postman_fixtures
         and settings.env.lower() in {"dev", "development", "test", "testing"}
         and settings.database_uri.lower().startswith("sqlite")
         and settings.app_host in {"127.0.0.1", "::1"}

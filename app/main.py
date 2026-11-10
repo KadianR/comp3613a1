@@ -32,10 +32,12 @@ app = FastAPI(
 app.include_router(router)
 app.include_router(api_router)
 # A2 local-only fixture support: never expose in a deployed environment.
+
+# Assignment 2 local testing helper
 import os
 
 if (
-    os.environ.get("A2_ENABLE_POSTMAN_FIXTURES") == "1"
+    get_settings().a2_enable_postman_fixtures
     and get_settings().env.lower() in {"dev", "development", "test", "testing"}
     and get_settings().database_uri.lower().startswith("sqlite")
     and get_settings().app_host in {"127.0.0.1", "::1"}
@@ -43,6 +45,7 @@ if (
     from app.routers.a2_test_fixtures import router as a2_fixture_router
 
     app.include_router(a2_fixture_router)
+
 app.mount("/static", static_files, name="static")
 
 

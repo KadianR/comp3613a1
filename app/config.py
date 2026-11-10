@@ -107,6 +107,7 @@ class Settings(BaseSettings):
     db_additional_overflow: int = 10
     db_pool_timeout: int = 10
     db_pool_recycle: int = 10
+    a2_enable_postman_fixtures: bool = False
 
     @field_validator("app_port", mode="before")
     @classmethod
