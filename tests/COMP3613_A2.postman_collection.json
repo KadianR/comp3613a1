@@ -1,0 +1,783 @@
+{
+  "info": {
+    "_postman_id": "07c2c274-4c87-4eb7-9bcb-dee8c24aaf74",
+    "name": "COMP3613_A2",
+    "description": "Exactly 12 visible requests. Requests 08-12 are repeatable using fresh test fixtures created automatically by the local-only /api/_a2/fixture-bookings helper. Preconditions: install a2_test_fixtures.py and enable helper ONLY with A2_ENABLE_POSTMAN_FIXTURES=1, ENV=development and a local SQLite DATABASE_URI. Never enable fixtures against a public or production database. Set collection variables studentUsername, studentPassword, landlordUsername, landlordPassword; disable automatic redirects on both login requests. Run the collection in order. Run 01 resets transient IDs/tokens only, not credentials. Request 08 makes a background fixture call that does not add a 13th visible request. New fixture listings/bookings persist in the local database each run.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "52604923"
+  },
+  "item": [
+    {
+      "name": "01 - Health Check",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// A full run starts clean; retain user-supplied credentials.",
+              "for (const key of [",
+              "    'studentToken', 'landlordToken', 'listingId', 'bookingId',",
+              "    'approvalBookingId', 'declineBookingId', 'completedBookingId',",
+              "    'fixtureListingId'",
+              "]) pm.collectionVariables.unset(key);"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Health endpoint is OK', () => pm.expect(pm.response.json().ok).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Existing GET /health route. No authentication needed."
+      },
+      "response": []
+    },
+    {
+      "name": "02 - Student Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Student login returns redirect 303', () => pm.response.to.have.status(303));",
+              "const header = pm.response.headers.get('Set-Cookie') || '';",
+              "const match = header.match(/(?:^|[,\\s])access_token=([^;\\s,]+)/i);",
+              "pm.test('Student authentication cookie returned', () => pm.expect(match, 'Set-Cookie access_token is missing').to.not.be.null);",
+              "if (match) pm.collectionVariables.set('studentToken', match[1]);"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": false,
+        "followRedirects": false
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{studentUsername}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{studentPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "role",
+              "value": "student",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": "Uses the original HTML form login (not a JSON login). Disable automatic redirect following. Enter studentUsername and studentPassword in collection variables."
+      },
+      "response": []
+    },
+    {
+      "name": "03 - Get Accommodation Listings",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Listings returned as JSON array', () => pm.expect(data).to.be.an('array'));",
+              "pm.test('At least one available listing exists for workflow', () => pm.expect(data.length).to.be.greaterThan(0));",
+              "pm.test('All returned listings are available', () => data.forEach(x => pm.expect(x.status).to.eql('available')));",
+              "pm.test('Prices sorted low to high', () => {",
+              "    for (let i=1;i<data.length;i++) pm.expect(Number(data[i].price_per_month)).to.be.at.least(Number(data[i-1].price_per_month));",
+              "});",
+              "if (data.length && data[0].id != null) pm.collectionVariables.set('listingId', String(data[0].id));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{studentToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/accommodations?sort=lowest_price",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "accommodations"
+          ],
+          "query": [
+            {
+              "key": "sort",
+              "value": "lowest_price"
+            }
+          ]
+        },
+        "description": "Existing GET JSON endpoint only if you added the accommodation listing API code from our earlier step. First available listing ID is saved as listingId."
+      },
+      "response": []
+    },
+    {
+      "name": "04 - Get Accommodation Details",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data=pm.response.json();",
+              "pm.test('Details match selected listing', () => pm.expect(String(data.id)).to.eql(pm.collectionVariables.get('listingId')));",
+              "pm.test('Essential listing fields exist', () => {",
+              "   ['title','address','description','price_per_month','status'].forEach(k => pm.expect(data).to.have.property(k));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{studentToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/accommodations/{{listingId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "accommodations",
+            "{{listingId}}"
+          ]
+        },
+        "description": "Planned JSON endpoint. Does not exist in the original Assignment 1 project until implemented."
+      },
+      "response": []
+    },
+    {
+      "name": "05 - Submit Booking Request",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const day = new Date();",
+              "const fmt = d => d.toISOString().slice(0,10);",
+              "const s=new Date(Date.UTC(day.getUTCFullYear(),day.getUTCMonth(),day.getUTCDate()+2));",
+              "const e=new Date(Date.UTC(day.getUTCFullYear(),day.getUTCMonth(),day.getUTCDate()+32));",
+              "pm.collectionVariables.set('startDate',fmt(s));",
+              "pm.collectionVariables.set('endDate',fmt(e));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201 Created', () => pm.response.to.have.status(201));",
+              "const data=pm.response.json();",
+              "pm.test('Booking is pending',()=>pm.expect(data.status).to.eql('pending'));",
+              "pm.test('Booking uses selected accommodation',()=>pm.expect(String(data.accommodation_id)).to.eql(pm.collectionVariables.get('listingId')));",
+              "pm.test('Booking ID returned',()=>pm.expect(data.id).to.be.a('number'));",
+              "if(data.id!=null)pm.collectionVariables.set('bookingId',String(data.id));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{studentToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"accommodation_id\": \"{{listingId}}\",\n  \"start_date\": \"{{startDate}}\",\n  \"end_date\": \"{{endDate}}\",\n  \"message\": \"Assignment 2 Postman test booking\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/bookings",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "bookings"
+          ]
+        },
+        "description": "Planned JSON POST endpoint. Dates computed at run time and submitted to API. Requires listingId from 03."
+      },
+      "response": []
+    },
+    {
+      "name": "06 - View Student Bookings",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const data=pm.response.json();",
+              "pm.test('Student bookings are an array',()=>pm.expect(data).to.be.an('array'));",
+              "pm.test('Submitted booking is visible',()=>pm.expect(data.some(b=>String(b.id)===pm.collectionVariables.get('bookingId') && b.status==='pending')).to.eql(true));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{studentToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/bookings/my",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "bookings",
+            "my"
+          ]
+        },
+        "description": "Planned JSON GET endpoint. Confirms newly submitted pending booking appears for student."
+      },
+      "response": []
+    },
+    {
+      "name": "07 - Landlord Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Landlord login returns redirect 303',()=>pm.response.to.have.status(303));",
+              "const header=pm.response.headers.get('Set-Cookie') || '';",
+              "const match=header.match(/(?:^|[,\\s])access_token=([^;\\s,]+)/i);",
+              "pm.test('Landlord authentication cookie returned',()=>pm.expect(match,'Set-Cookie access_token is missing').to.not.be.null);",
+              "if(match)pm.collectionVariables.set('landlordToken',match[1]);"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": false,
+        "followRedirects": false
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{landlordUsername}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{landlordPassword}}",
+              "type": "text"
+            },
+            {
+              "key": "role",
+              "value": "landlord",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/login",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "login"
+          ]
+        },
+        "description": "Uses original HTML login route. Set landlordUsername and landlordPassword in collection variables. Landlord must own the accommodation used in request 05."
+      },
+      "response": []
+    },
+    {
+      "name": "08 - View Landlord Booking Requests",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Runs BEFORE GET /api/landlord/requests. This is a hidden setup call,",
+              "// not an extra visible request in the 12-request collection.",
+              "const base = pm.variables.replaceIn('{{baseUrl}}').replace(/\\/$/, '');",
+              "const landlordToken = pm.collectionVariables.get('landlordToken');",
+              "const studentUsername = pm.collectionVariables.get('studentUsername');",
+              "if (!landlordToken || !studentUsername) {",
+              "    throw new Error('Run 02 - Student Login and 07 - Landlord Login first, and configure studentUsername');",
+              "}",
+              "pm.sendRequest({",
+              "    url: base + '/api/_a2/fixture-bookings',",
+              "    method: 'POST',",
+              "    header: {",
+              "        'Content-Type': 'application/json',",
+              "        'Cookie': 'access_token=' + landlordToken",
+              "    },",
+              "    body: {",
+              "        mode: 'raw',",
+              "        raw: JSON.stringify({ student_username: studentUsername })",
+              "    }",
+              "}, function (err, res) {",
+              "    if (err) throw new Error('A2 fixture setup failed: ' + err);",
+              "    if (!res || res.code !== 201) {",
+              "        throw new Error('A2 fixture setup returned ' + (res ? res.code : 'no response') +",
+              "            ': ' + (res ? res.text() : '') +",
+              "            '. Check that the local-only helper is installed and enabled.');",
+              "    }",
+              "    const fixture = res.json();",
+              "    const mapping = {",
+              "        fixtureListingId: 'fixture_listing_id',",
+              "        approvalBookingId: 'approval_booking_id',",
+              "        declineBookingId: 'decline_booking_id',",
+              "        completedBookingId: 'completed_booking_id'",
+              "    };",
+              "    Object.entries(mapping).forEach(([variable, field]) => {",
+              "        if (fixture[field] == null) throw new Error('Fixture missing ' + field);",
+              "        pm.collectionVariables.set(variable, String(fixture[field]));",
+              "    });",
+              "});"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Landlord requests are an array', () => pm.expect(data).to.be.an('array'));",
+              "pm.test('Fresh approval request is pending and visible', () => {",
+              "    const id = pm.collectionVariables.get('approvalBookingId');",
+              "    pm.expect(data.some(b => String(b.id) === id && b.status === 'pending')).to.eql(true);",
+              "});",
+              "pm.test('Fresh decline request is pending and visible', () => {",
+              "    const id = pm.collectionVariables.get('declineBookingId');",
+              "    pm.expect(data.some(b => String(b.id) === id && b.status === 'pending')).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{landlordToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/landlord/requests",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "landlord",
+            "requests"
+          ]
+        },
+        "description": "Lists requests owned by the logged-in landlord. A pre-request script provisions fresh pending and historical fixtures through a local-only test helper. This keeps requests 09-12 repeatable."
+      },
+      "response": []
+    },
+    {
+      "name": "09 - Approve Booking Request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Booking status approved', () => pm.expect(data.status).to.eql('approved'));",
+              "pm.test('Correct booking changed', () =>",
+              "    pm.expect(String(data.id)).to.eql(pm.collectionVariables.get('approvalBookingId')));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{landlordToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"decision\": \"approved\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/landlord/requests/{{approvalBookingId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "landlord",
+            "requests",
+            "{{approvalBookingId}}"
+          ]
+        },
+        "description": "Approves the fresh pending booking created just before request 08."
+      },
+      "response": []
+    },
+    {
+      "name": "10 - Decline Booking Request",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200',()=>pm.response.to.have.status(200));",
+              "const data=pm.response.json();",
+              "pm.test('Booking status declined',()=>pm.expect(data.status).to.eql('declined'));",
+              "pm.test('Correct booking changed',()=>pm.expect(String(data.id)).to.eql(pm.collectionVariables.get('declineBookingId')));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{landlordToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"decision\": \"declined\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/landlord/requests/{{declineBookingId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "landlord",
+            "requests",
+            "{{declineBookingId}}"
+          ]
+        },
+        "description": "Declines a DIFFERENT fresh pending booking created just before request 08."
+      },
+      "response": []
+    },
+    {
+      "name": "11 - Complete Stay",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "const data = pm.response.json();",
+              "pm.test('Booking marked completed', () => pm.expect(data.status).to.eql('completed'));",
+              "pm.test('Correct booking completed', () =>",
+              "    pm.expect(String(data.id)).to.eql(pm.collectionVariables.get('completedBookingId')));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": false
+      },
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{landlordToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/landlord/requests/{{completedBookingId}}/complete",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "landlord",
+            "requests",
+            "{{completedBookingId}}",
+            "complete"
+          ]
+        },
+        "description": "Completes a fresh historical approved booking created just before request 08."
+      },
+      "response": []
+    },
+    {
+      "name": "12 - Submit Review",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 201 Created',()=>pm.response.to.have.status(201));",
+              "const data=pm.response.json();",
+              "pm.test('Rating is saved',()=>pm.expect(data.rating).to.eql(5));",
+              "pm.test('Review linked to completed booking',()=>pm.expect(String(data.booking_request_id)).to.eql(pm.collectionVariables.get('completedBookingId')));",
+              "pm.test('Review text returned',()=>pm.expect(data.review_text).to.eql('Great accommodation - Postman UAT test'));"
+            ]
+          }
+        }
+      ],
+      "protocolProfileBehavior": {
+        "disableCookies": true,
+        "followRedirects": true
+      },
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Cookie",
+            "value": "access_token={{studentToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"rating\": 5,\n  \"review_text\": \"Great accommodation - Postman UAT test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/bookings/{{completedBookingId}}/reviews",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "bookings",
+            "{{completedBookingId}}",
+            "reviews"
+          ]
+        },
+        "description": "Student reviews the newly completed fixture booking. Uses the token from request 02."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5000"
+    },
+    {
+      "key": "studentUsername",
+      "value": ""
+    },
+    {
+      "key": "studentPassword",
+      "value": ""
+    },
+    {
+      "key": "landlordUsername",
+      "value": ""
+    },
+    {
+      "key": "landlordPassword",
+      "value": ""
+    },
+    {
+      "key": "startDate",
+      "value": ""
+    },
+    {
+      "key": "endDate",
+      "value": ""
+    },
+    {
+      "key": "studentToken",
+      "value": ""
+    },
+    {
+      "key": "listingId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "landlordToken",
+      "value": ""
+    },
+    {
+      "key": "fixtureListingId",
+      "value": ""
+    },
+    {
+      "key": "approvalBookingId",
+      "value": ""
+    },
+    {
+      "key": "declineBookingId",
+      "value": ""
+    },
+    {
+      "key": "completedBookingId",
+      "value": ""
+    }
+  ]
+}
